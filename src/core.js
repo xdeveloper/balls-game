@@ -9,6 +9,10 @@ class Core {
             throw new Error("Size of field must be 5 x 5 minimum");
         }
 
+        if (n > 100) {
+            throw new Error("Size of field must be 100 x 100 maximum");
+        }
+
         let whole = new Array(n);
 
         for (let r = 0; r < n; r++) {

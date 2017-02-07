@@ -35,6 +35,10 @@ test('generates fail', () => {
         new Core().generate(2);
     }).toThrow(new Error("Size of field must be 5 x 5 minimum"));
 
+    expect(function () {
+        new Core().generate(101);
+    }).toThrow(new Error("Size of field must be 100 x 100 maximum"));
+
 });
 
 test('detect swap direction', () => {
