@@ -20,7 +20,9 @@ function inArray(needle, haystack) {
 
 
 test('generates ok', () => {
-    let field = new Core().generate(5);
+    let core = new Core();
+    core.generate(5);
+    let field = core.getField();
 
     // Contain only 1, 2, 3, 4 balls (so - 5 is illegal ball)
     expect(inArray(5, field[0])).toBeFalsy();
@@ -42,12 +44,29 @@ test('generates fail', () => {
 });
 
 test('detect swap direction', () => {
+    expect(Core.detectSwapDirection({row: 0, col: 0}, {row: 1, col: 0})).toEqual({direction: 'vertical'});
+    expect(Core.detectSwapDirection({row: 0, col: 0}, {row: 0, col: 1})).toEqual({direction: 'horizontal'});
+    expect(Core.detectSwapDirection({row: 0, col: 0}, {row: 0, col: 0})).toEqual({direction: 'illegal'}); // the same
+    expect(Core.detectSwapDirection({row: 0, col: 0}, {row: 1, col: 1})).toEqual({direction: 'illegal'}); // diagonal
+    expect(Core.detectSwapDirection({row: 0, col: 0}, {row: 0, col: 2})).toEqual({direction: 'illegal'}); // too far
+    expect(Core.detectSwapDirection({row: 0, col: 0}, {row: 2, col: 2})).toEqual({direction: 'illegal'}); // diagonal too far
+});
+
+test('do swap', () => {
     let core = new Core();
 
-    expect(core.detectSwapDirection([0, 0], [1, 0])).toEqual({direction: 'vertical'});
-    expect(core.detectSwapDirection([0, 0], [0, 1])).toEqual({direction: 'horizontal'});
-    expect(core.detectSwapDirection([0, 0], [0, 0])).toEqual({direction: 'illegal'}); // the same
-    expect(core.detectSwapDirection([0, 0], [1, 1])).toEqual({direction: 'illegal'}); // diagonal
-    expect(core.detectSwapDirection([0, 0], [0, 2])).toEqual({direction: 'illegal'}); // too far
-    expect(core.detectSwapDirection([0, 0], [2, 2])).toEqual({direction: 'illegal'}); // diagonal too far
+    let field = [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0],
+        [1, 1, 2, 1, 0],
+        [0, 0, 0, 1, 0]
+    ];
+
+    core.setField(field);
+    core.swap({row: 2, col: 2}, {row: 3, col: 2});
+
+    //let newField = core.getField();
+
+
 });
