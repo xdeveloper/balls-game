@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
 import Core from './core.js';
-import {inArray, areFieldsEqual} from './test-helpers';
+import {inArray, areFieldsEqual} from './helpers';
 
 it('renders without crashing', () => {
     const div = document.createElement('div');
@@ -33,6 +33,12 @@ test('generates fail', () => {
 
 });
 
+test('generate balls', () => {
+    expect(Core.generateBalls(0, 0)).toEqual([]);
+    expect(Core.generateBalls(5, 0)).toEqual([0, 0, 0, 0, 0]);
+    expect(Core.generateBalls(5).length).toEqual(5); // randomly filled array
+});
+
 test('detect move direction', () => {
     expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 1, col: 0})).toEqual({direction: 'vertical'});
     expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 0, col: 1})).toEqual({direction: 'horizontal'});
@@ -53,45 +59,39 @@ test('refine balls line', () => {
 });
 
 test('copy column', () => {
-    let core = new Core();
-    core.setField([
+    let core = new Core([
         [3, 3, 3, 3, 3],
         [3, 3, 3, 3, 3],
         [3, 3, 1, 3, 3],
         [1, 1, 2, 1, 3],
         [3, 3, 3, 1, 3]
     ]);
-
     expect(core.copyColumn(0)).toEqual([3, 3, 3, 1, 3]);
     expect(core.copyColumn(2)).toEqual([3, 3, 1, 2, 3]);
     expect(core.copyColumn(4)).toEqual([3, 3, 3, 3, 3]);
 });
 
 test('copy row', () => {
-    let core = new Core();
-    core.setField([
+    let core = new Core([
         [3, 3, 3, 3, 3],
         [3, 3, 3, 3, 3],
         [3, 3, 1, 3, 3],
         [1, 1, 2, 1, 3],
         [3, 3, 3, 1, 3]
     ]);
-
     expect(core.copyRow(0)).toEqual([3, 3, 3, 3, 3]);
     expect(core.copyRow(2)).toEqual([3, 3, 1, 3, 3]);
     expect(core.copyRow(4)).toEqual([3, 3, 3, 1, 3]);
 });
 
-test('set column', () => {
-    let core = new Core();
-    core.setField([
+test('set column (wrong column)', () => {
+    let core = new Core([
         [3, 3, 3, 3, 3],
         [3, 3, 3, 3, 3],
         [3, 3, 1, 3, 3],
         [1, 1, 2, 1, 3],
         [3, 3, 3, 1, 3]
     ]);
-
     core.setColumn(0, [7, 7, 7]);
     expect(areFieldsEqual(core.getField(), [
         [3, 3, 3, 3, 3],
@@ -101,6 +101,24 @@ test('set column', () => {
         [3, 3, 3, 1, 3]
     ])).toBeTruthy();
 
+    core.setColumn(0, [7, 7, 7, 7, 7]);
+    expect(areFieldsEqual(core.getField(), [
+        [7, 3, 3, 3, 3],
+        [7, 3, 3, 3, 3],
+        [7, 3, 1, 3, 3],
+        [7, 1, 2, 1, 3],
+        [7, 3, 3, 1, 3]
+    ])).toBeTruthy();
+});
+
+test('set column (correct column)', () => {
+    let core = new Core([
+        [3, 3, 3, 3, 3],
+        [3, 3, 3, 3, 3],
+        [3, 3, 1, 3, 3],
+        [1, 1, 2, 1, 3],
+        [3, 3, 3, 1, 3]
+    ]);
     core.setColumn(0, [7, 7, 7, 7, 7]);
     expect(areFieldsEqual(core.getField(), [
         [7, 3, 3, 3, 3],
@@ -132,7 +150,7 @@ test('swap 2 balls on field', () => {
     expect(areFieldsEqual(core.getField(), newField)).toBeTruthy();
 });
 
-test('make allowed move vertically', () => {
+test('make correct move vertically', () => {
     let core = new Core();
     let field = [
         [3, 3, 3, 3, 3],
@@ -153,8 +171,7 @@ test('make allowed move vertically', () => {
     expect(areFieldsEqual(core.getField(), newField)).toBeTruthy();
 });
 
-test('make forbidden move vertically', () => {
-    let core = new Core();
+test('make unchanging move vertically', () => {
     let field = [
         [3, 3, 3, 3, 3],
         [3, 3, 3, 3, 3],
@@ -162,12 +179,14 @@ test('make forbidden move vertically', () => {
         [1, 1, 2, 1, 3],
         [3, 3, 3, 1, 3]
     ];
-    core.setField(field);
-    core.makeMove({row: 2, col: 2}, {row: 1, col: 2});
+    let core = new Core(field);
+    let result = core.makeMove({row: 2, col: 2}, {row: 1, col: 2});
     expect(areFieldsEqual(core.getField(), field)).toBeTruthy();
+    expect(result.pos).toEqual(0);
+    expect(result.type).toEqual('unchanged');
 });
 
-test('make allowed move horizontally', () => {
+test('make correct move horizontally', () => {
     let core = new Core();
     let field = [
         [3, 3, 3, 3, 3],
@@ -188,8 +207,7 @@ test('make allowed move horizontally', () => {
     expect(areFieldsEqual(core.getField(), newField)).toBeTruthy();
 });
 
-test('make forbidden move horizontally', () => {
-    let core = new Core();
+test('make unchanging move horizontally', () => {
     let field = [
         [3, 3, 3, 3, 3],
         [3, 3, 3, 3, 3],
@@ -197,7 +215,36 @@ test('make forbidden move horizontally', () => {
         [1, 1, 2, 1, 3],
         [3, 3, 3, 1, 3]
     ];
-    core.setField(field);
-    core.makeMove({row: 2, col: 2}, {row: 2, col: 1});
+
+    let core = new Core(field);
+    let result = core.makeMove({row: 2, col: 2}, {row: 2, col: 1});
     expect(areFieldsEqual(core.getField(), field)).toBeTruthy();
+    expect(result.pos).toEqual(0);
+    expect(result.type).toEqual('unchanged');
+});
+
+test('deleted balls position', () => {
+    expect(Core.deletedBallsPos([0, 0, 0, 0, 0])).toEqual({start: 0, end: 4});
+    expect(Core.deletedBallsPos([1, 0, 0, 1, 1])).toEqual({start: 1, end: 2});
+    expect(Core.deletedBallsPos([1, 1, 0, 0, 0])).toEqual({start: 2, end: 4});
+    expect(Core.deletedBallsPos([1, 0, 0, 1, 0, 0])).toEqual({start: 1, end: 2});
+    expect(Core.deletedBallsPos([1, 1, 1, 1, 1])).toEqual(undefined);
+});
+
+test('refill row (predefined value)', () => {
+    let core = new Core([
+        [4, 4, 4, 4, 4],
+        [3, 3, 3, 3, 3],
+        [3, 3, 2, 3, 3],
+        [0, 0, 0, 0, 4],
+        [3, 3, 3, 1, 3]
+    ]);
+    core.refillWith({pos: 3, type: 'row'}, 0);
+    expect(areFieldsEqual(core.getField(), [
+        [0, 0, 0, 0, 4],
+        [4, 4, 4, 4, 3],
+        [3, 3, 3, 3, 3],
+        [3, 3, 2, 3, 4],
+        [3, 3, 3, 1, 3]
+    ])).toBeTruthy();
 });

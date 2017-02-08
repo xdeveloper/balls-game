@@ -1,4 +1,3 @@
-
 function inArray(needle, haystack) {
     var count = haystack.length;
     for (var i = 0; i < count; i++) {
@@ -48,5 +47,8 @@ function areFieldsEqual(arr1, arr2) {
     return result;
 }
 
+function serializeCoord(coords) {
+    return '{row: ' + coords.row + ' , col: ' + coords.col + '}';
+}
 
-export { inArray, areFieldsEqual };
+export {inArray, areFieldsEqual, serializeCoord};

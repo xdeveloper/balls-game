@@ -1,9 +1,12 @@
 'use strict';
 
+import {serializeCoord} from './helpers';
+
 class Core {
 
-    constructor() {
-        this.field = undefined;
+    // For unit testing
+    constructor(field) {
+        this.field = field;
     }
 
     generate(n) {
@@ -39,9 +42,6 @@ class Core {
         return Math.floor(Math.random() * (4 - 1 + 1)) + 1;
     }
 
-    /**
-     * Vertical, Horizontal, Illegal
-     */
     static detectMoveDirection(firstBallCoords, secondBallCoords) {
         function neighbours(pos1, pos2) {
             return (Math.abs(pos1 - pos2) == 1);
@@ -67,23 +67,85 @@ class Core {
 
         let direction = Core.detectMoveDirection(fromBallCoords, toBallCoords);
 
+        let result = {pos: 0, type: UNCHANGED_TYPE};
+
         if (this.isIllegalDirection(direction)) {
             console.log("Illegal Move Direction");
+            result = {pos: 0, type: ILLEGAL_TYPE};
         } else if (this.isVerticalDirection(direction)) {
             let ballsRow = this.copyRow(toBallCoords.row);
             ballsRow[toBallCoords.col] = this.getBallByCoords(fromBallCoords);
             this.swapBallsOnField(fromBallCoords, toBallCoords);
-            this.setRow(toBallCoords.row, Core.refineBallsLine(ballsRow));
+            let refined = Core.refineBallsLine(ballsRow);
+            if (this.containsDeletedBalls(refined)) {
+                this.setRow(toBallCoords.row, refined);
+                result = {pos: toBallCoords.row, type: ROW_TYPE};
+            }
         } else if (this.isHorizontalDirection(direction)) {
             let ballsColumn = this.copyColumn(toBallCoords.col);
             ballsColumn[toBallCoords.row] = this.getBallByCoords(fromBallCoords);
             this.swapBallsOnField(fromBallCoords, toBallCoords);
-            this.setColumn(toBallCoords.col, Core.refineBallsLine(ballsColumn));
+            let refined = Core.refineBallsLine(ballsColumn);
+            if (this.containsDeletedBalls(refined)) {
+                this.setColumn(toBallCoords.col, refined);
+                result = {pos: toBallCoords.col, type: COLUMN_TYPE};
+            }
+        }
+
+        return result;
+    }
+
+    // For unit testing
+    refillWith(coords, value) {
+        let {pos: pos, type: type} = coords;
+
+        if (type === ROW_TYPE) {
+            let deletedBallsPos = Core.deletedBallsPos(this.getRow(pos));
+            this.refillArea(deletedBallsPos.start, deletedBallsPos.end, pos, value);
         }
     }
 
-    static serializeCoord(coords) {
-        return '{row: ' + coords.row + ' , col: ' + coords.col + '}';
+    refillArea(start, end, row, value) {
+        function modifyRow(dest, src, start, end) {
+            let chunk = src.slice(start, end + 1);
+            for (let i = start; i != end + 1; i++) {
+                dest[i] = chunk[i];
+            }
+        }
+
+        for (let i = row; i > 0; i--) {
+            modifyRow(this.getRow(i), this.getRow(i - 1), start, end);
+        }
+
+        let newlyGeneratedBalls = Core.generateBalls(end - start + 1, value);
+        modifyRow(this.getRow(0), newlyGeneratedBalls, start, end);
+    }
+
+    static generateBalls(count, value) {
+        let balls = [];
+        for (let i = 0; i < count; i++) {
+            balls.push(value === undefined ? Core.generateBall() : value);
+        }
+        return balls;
+    }
+
+    static deletedBallsPos(ballsLine) {
+        let result;
+        for (let i = 0; i < ballsLine.length; i++) {
+            if (ballsLine[i] === DELETED_BALL) {
+                if (result !== undefined) {
+                    result.end = i;
+                } else {
+                    result = {start: i, end: i};
+                }
+            } else {
+                if (result !== undefined) {
+                    break;
+                }
+            }
+        }
+
+        return result;
     }
 
     swapBallsOnField(fromBallCoords, toBallCoords) {
@@ -175,6 +237,10 @@ class Core {
         return makeNewLineIfNeeded(buffer, ballsLine);
     }
 
+    containsDeletedBalls(line) {
+        return line.indexOf(DELETED_BALL) != -1;
+    }
+
     setRow(row, balls) {
         this.field[row] = balls;
     }
@@ -193,5 +259,10 @@ const VERTICAL = 'vertical';
 const HORIZONTAL = 'horizontal';
 const ILLEGAL = 'illegal';
 const DELETED_BALL = 0;
+
+const ROW_TYPE = 'row';
+const COLUMN_TYPE = 'column';
+const ILLEGAL_TYPE = 'illegal';
+const UNCHANGED_TYPE = 'unchanged';
 
 export default Core;
