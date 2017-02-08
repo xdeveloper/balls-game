@@ -30,6 +30,7 @@ class Core {
         return this.field;
     }
 
+    // For unit testing
     setField(field) {
         this.field = field;
     }
@@ -77,21 +78,34 @@ class Core {
 
         if (this.isVerticalDirection(direction)) {
             console.log("Vertical");
-            console.log("Row number: " + toBallCoords.row);
-            let ballsRow = this.getRow(toBallCoords.row);
+            let ballsRow = this.copyRow(toBallCoords.row);
             console.log("Balls row: " + ballsRow);
-
             ballsRow[toBallCoords.col] = fromBall;
             console.log("Balls row to verify: " + ballsRow);
 
-            let {start: start, end: end} = this.verifyBallsLine(ballsRow);
+            let refinedBallsRow = Core.refineBallsLine(ballsRow);
 
+
+            console.log("From ball с: " + Core.serializeCoord(fromBallCoords) + ", to ball с: " + Core.serializeCoord(toBallCoords));
+            console.log("From ball: " + this.getBallByCoords(fromBallCoords) + ", to ball: " + this.getBallByCoords(toBallCoords));
+
+            this.swapBallsOnField(fromBallCoords, toBallCoords);
+
+            this.field[toBallCoords.row] = refinedBallsRow;
         }
 
-
         console.log("From ball: " + fromBall + ", to ball: " + toBall);
+    }
 
+    static serializeCoord(coords) {
+        return '{row: ' + coords.row + ' , col: ' + coords.col + '}';
+    }
 
+    swapBallsOnField(fromBallCoords, toBallCoords) {
+        let fromBall = this.getBallByCoords(fromBallCoords);
+        let toBall = this.getBallByCoords(toBallCoords);
+        this.setBallByCoords(fromBallCoords, toBall);
+        this.setBallByCoords(toBallCoords, fromBall);
     }
 
     isVerticalDirection(direction) {
@@ -106,6 +120,10 @@ class Core {
         return this.field[coords.row][coords.col];
     }
 
+    setBallByCoords(coords, ball) {
+        this.field[coords.row][coords.col] = ball;
+    }
+
     checkField() {
         console.log("Checking field...");
 
@@ -118,30 +136,54 @@ class Core {
         return this.field[row];
     }
 
-    verifyBallsLine(ballsLine) {
-        let buffer = ballsLine[0];
-        var start;
-        var end;
+    copyRow(row) {
+        return this.getRow(row).slice();
+    }
+
+    static refineBallsLine(ballsLine) {
+        function isLongEnough(buffer) {
+            return buffer.length >= 3;
+        }
+
+        function makeNewLineIfNeeded(buffer, ballsLine) {
+            if (!isLongEnough(buffer)) {
+                return ballsLine;
+            } else {
+                let newBallLine = ballsLine.slice();
+                for (let i = start; i <= end; i++) {
+                    newBallLine[i] = DELETED_BALL;
+                }
+
+                return newBallLine;
+            }
+        }
+
+        let buffer = [ballsLine[0]];
+        let start = 0;
+        let end;
 
         for (var i = 1; i < ballsLine.length; i++) {
-            var current = ballsLine[i];
-
+            let current = ballsLine[i];
             if (buffer.includes(current)) {
                 buffer.push(current);
                 end = i;
             } else {
-                if (buffer.length >= 3) {
-
+                if (isLongEnough(buffer)) {
+                    break;
+                } else {
+                    start = i;
+                    buffer = [current];
                 }
             }
-
-
         }
+
+        return makeNewLineIfNeeded(buffer, ballsLine);
     }
 }
 
 const VERTICAL = 'vertical';
 const HORIZONTAL = 'horizontal';
 const ILLEGAL = 'illegal';
+const DELETED_BALL = 0;
 
 export default Core;
