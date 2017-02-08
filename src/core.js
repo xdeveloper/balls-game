@@ -42,8 +42,7 @@ class Core {
     /**
      * Vertical, Horizontal, Illegal
      */
-    static detectSwapDirection(firstBallCoords, secondBallCoords) {
-
+    static detectMoveDirection(firstBallCoords, secondBallCoords) {
         function neighbours(pos1, pos2) {
             return (Math.abs(pos1 - pos2) == 1);
         }
@@ -63,38 +62,24 @@ class Core {
         return {direction: direction}
     }
 
-    swap(fromBallCoords, toBallCoords) {
+    makeMove(fromBallCoords, toBallCoords) {
         this.checkField();
 
-        console.log("Field");
-        console.log(this.field);
+        let direction = Core.detectMoveDirection(fromBallCoords, toBallCoords);
 
-        let direction = Core.detectSwapDirection(fromBallCoords, toBallCoords);
-
-        console.log("Direction -> " + direction.direction);
-
-        let fromBall = this.getBallByCoords(fromBallCoords);
-        let toBall = this.getBallByCoords(toBallCoords);
-
-        if (this.isVerticalDirection(direction)) {
-            console.log("Vertical");
+        if (this.isIllegalDirection(direction)) {
+            console.log("Illegal Move Direction");
+        } else if (this.isVerticalDirection(direction)) {
             let ballsRow = this.copyRow(toBallCoords.row);
-            console.log("Balls row: " + ballsRow);
-            ballsRow[toBallCoords.col] = fromBall;
-            console.log("Balls row to verify: " + ballsRow);
-
-            let refinedBallsRow = Core.refineBallsLine(ballsRow);
-
-
-            console.log("From ball с: " + Core.serializeCoord(fromBallCoords) + ", to ball с: " + Core.serializeCoord(toBallCoords));
-            console.log("From ball: " + this.getBallByCoords(fromBallCoords) + ", to ball: " + this.getBallByCoords(toBallCoords));
-
+            ballsRow[toBallCoords.col] = this.getBallByCoords(fromBallCoords);
             this.swapBallsOnField(fromBallCoords, toBallCoords);
-
-            this.field[toBallCoords.row] = refinedBallsRow;
+            this.setRow(toBallCoords.row, Core.refineBallsLine(ballsRow));
+        } else if (this.isHorizontalDirection(direction)) {
+            let ballsColumn = this.copyColumn(toBallCoords.col);
+            ballsColumn[toBallCoords.row] = this.getBallByCoords(fromBallCoords);
+            this.swapBallsOnField(fromBallCoords, toBallCoords);
+            this.setColumn(toBallCoords.col, Core.refineBallsLine(ballsColumn));
         }
-
-        console.log("From ball: " + fromBall + ", to ball: " + toBall);
     }
 
     static serializeCoord(coords) {
@@ -106,6 +91,10 @@ class Core {
         let toBall = this.getBallByCoords(toBallCoords);
         this.setBallByCoords(fromBallCoords, toBall);
         this.setBallByCoords(toBallCoords, fromBall);
+    }
+
+    isIllegalDirection(direction) {
+        return direction.direction === ILLEGAL;
     }
 
     isVerticalDirection(direction) {
@@ -125,8 +114,6 @@ class Core {
     }
 
     checkField() {
-        console.log("Checking field...");
-
         if (this.field === undefined) {
             throw new Error("Generate field first");
         }
@@ -136,8 +123,16 @@ class Core {
         return this.field[row];
     }
 
+    getColumn(col) {
+        return this.field.map((row) => row[col]);
+    }
+
     copyRow(row) {
         return this.getRow(row).slice();
+    }
+
+    copyColumn(col) {
+        return this.getColumn(col).slice();
     }
 
     static refineBallsLine(ballsLine) {
@@ -178,6 +173,19 @@ class Core {
         }
 
         return makeNewLineIfNeeded(buffer, ballsLine);
+    }
+
+    setRow(row, balls) {
+        this.field[row] = balls;
+    }
+
+    setColumn(col, balls) {
+        if (this.field.length != balls.length) {
+            return;
+        }
+
+        let i = 0;
+        this.field.forEach((row) => row[col] = balls[i++]);
     }
 }
 
