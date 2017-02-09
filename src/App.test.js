@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
 import Core from './core.js';
-import {inArray, areFieldsEqual} from './helpers';
+import {inArray, areFieldsEqual, log} from './helpers';
 
 it('renders without crashing', () => {
     const div = document.createElement('div');
@@ -246,5 +246,25 @@ test('refill row (predefined value)', () => {
         [3, 3, 3, 3, 3],
         [3, 3, 2, 3, 4],
         [3, 3, 3, 1, 3]
+    ])).toBeTruthy();
+});
+
+test('refill column (predefined value)', () => {
+    let core = new Core([
+        [5, 5, 5, 5, 5, 5],
+        [4, 4, 4, 4, 4, 5],
+        [3, 3, 0, 3, 3, 5],
+        [3, 3, 0, 3, 3, 5],
+        [1, 2, 0, 4, 4, 5],
+        [3, 3, 3, 1, 3, 5],
+    ]);
+    core.refillWith({pos: 2, type: 'column'}, 7);
+    expect(areFieldsEqual(core.getField(), [
+        [5, 5, 7, 5, 5, 5],
+        [4, 4, 7, 4, 4, 5],
+        [3, 3, 7, 3, 3, 5],
+        [3, 3, 5, 3, 3, 5],
+        [1, 2, 4, 4, 4, 5],
+        [3, 3, 3, 1, 3, 5],
     ])).toBeTruthy();
 });

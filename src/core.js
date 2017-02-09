@@ -1,6 +1,9 @@
 'use strict';
 
-import {serializeCoord} from './helpers';
+import {serializeCoord, log} from './helpers';
+
+import {range} from 'lodash';
+
 
 class Core {
 
@@ -103,6 +106,15 @@ class Core {
             let deletedBallsPos = Core.deletedBallsPos(this.getRow(pos));
             this.refillArea(deletedBallsPos.start, deletedBallsPos.end, pos, value);
         }
+        if (type === COLUMN_TYPE) {
+            this.refillColumn(pos, value);
+        }
+    }
+
+    refillColumn(pos, value) {
+        let column = this.getColumn(pos);
+        let survivors = column.filter((ball) => ball !== DELETED_BALL);
+        return Core.generateBalls(column.length - survivors.length, value).concat(survivors);
     }
 
     refillArea(start, end, row, value) {
@@ -121,12 +133,9 @@ class Core {
         modifyRow(this.getRow(0), newlyGeneratedBalls, start, end);
     }
 
-    static generateBalls(count, value) {
-        let balls = [];
-        for (let i = 0; i < count; i++) {
-            balls.push(value === undefined ? Core.generateBall() : value);
-        }
-        return balls;
+    static generateBalls(howManyBalls, ball) {
+        let generator = ball === undefined ? Core.generateBall : () => ball;
+        return range(howManyBalls).map(generator)
     }
 
     static deletedBallsPos(ballsLine) {

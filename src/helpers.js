@@ -1,54 +1,27 @@
+import {zip} from 'lodash';
+
 function inArray(needle, haystack) {
-    var count = haystack.length;
-    for (var i = 0; i < count; i++) {
-        if (haystack[i] === needle) {
-            return true;
-        }
-    }
-    return false;
+    return haystack.every((e) => e === needle);
 }
 
 function areFieldsEqual(arr1, arr2) {
-    let result = true;
-
-    function areRowsEqual(r1, r2) {
-        let result = true;
-
-        if (r1.length != r2.length) {
-            result = false;
-        } else {
-            for (let i = 0; i < r1.length; i++) {
-                if (r1[i] !== r2[i]) {
-                    result = false;
-                    break;
-                }
-            }
-        }
-
-        return result;
-    }
-
     if (arr1.length != arr2.length) {
         return false;
     }
 
-    let arrLength = arr1.length;
-
-    for (let i = 0; i < arrLength; i++) {
-        let r1 = arr1[i];
-        let r2 = arr2[i];
-
-        if (!areRowsEqual(r1, r2)) {
-            result = false;
-            break;
-        }
-    }
-
-    return result;
+    return zip(arr1, arr2).every((pair) => {
+        let row1 = pair[0];
+        let row2 = pair[1];
+        return (row1.length != row2.length) ? false : zip(row1, row2).every((pair) => pair[0] === pair[1]);
+    })
 }
 
 function serializeCoord(coords) {
     return '{row: ' + coords.row + ' , col: ' + coords.col + '}';
 }
 
-export {inArray, areFieldsEqual, serializeCoord};
+function log(message) {
+    console.log(message)
+}
+
+export {log, inArray, areFieldsEqual, serializeCoord};
