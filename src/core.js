@@ -1,7 +1,6 @@
 'use strict';
 
 import {serializeCoord, log} from './helpers';
-
 import {range} from 'lodash';
 
 
@@ -114,7 +113,8 @@ class Core {
     refillColumn(pos, value) {
         let column = this.getColumn(pos);
         let survivors = column.filter((ball) => ball !== DELETED_BALL);
-        return Core.generateBalls(column.length - survivors.length, value).concat(survivors);
+        let newBallsLine = Core.generateBalls(column.length - survivors.length, value).concat(survivors);
+        this.setColumn(pos, newBallsLine);
     }
 
     refillArea(start, end, row, value) {

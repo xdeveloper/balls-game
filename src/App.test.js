@@ -258,7 +258,9 @@ test('refill column (predefined value)', () => {
         [1, 2, 0, 4, 4, 5],
         [3, 3, 3, 1, 3, 5],
     ]);
+
     core.refillWith({pos: 2, type: 'column'}, 7);
+
     expect(areFieldsEqual(core.getField(), [
         [5, 5, 7, 5, 5, 5],
         [4, 4, 7, 4, 4, 5],
