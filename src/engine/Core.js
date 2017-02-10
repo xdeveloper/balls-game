@@ -1,13 +1,15 @@
 import {log, stop} from './helpers';
 import {range} from 'lodash';
 
-const VERTICAL = 'vertical';
-const HORIZONTAL = 'horizontal';
-const ILLEGAL = 'illegal';
+const VERTICAL_DIRECTION = 'vertical-direction';
+const HORIZONTAL_DIRECTION = 'horizontal-direction';
+const ILLEGAL_DIRECTION = 'illegal-direction';
 const DELETED_BALL = 0;
+
 const ROW_TYPE = 'row';
 const COLUMN_TYPE = 'column';
 const ILLEGAL_TYPE = 'illegal';
+
 const UNCHANGED_TYPE = 'unchanged';
 const SCORE_PER_BALL = 10;
 const HOW_MANY_BALL_COLOURS = 5;
@@ -66,11 +68,11 @@ class Core {
 
         let direction;
         if (col1 === col2 && neighbours(row1, row2)) {
-            direction = VERTICAL;
+            direction = VERTICAL_DIRECTION;
         } else if (row1 === row2 && neighbours(col1, col2)) {
-            direction = HORIZONTAL;
+            direction = HORIZONTAL_DIRECTION;
         } else {
-            direction = ILLEGAL;
+            direction = ILLEGAL_DIRECTION;
         }
 
         return {direction: direction}
@@ -188,15 +190,15 @@ class Core {
     }
 
     static isIllegalDirection(direction) {
-        return direction.direction === ILLEGAL;
+        return direction.direction === ILLEGAL_DIRECTION;
     }
 
     static isVerticalDirection(direction) {
-        return direction.direction === VERTICAL;
+        return direction.direction === VERTICAL_DIRECTION;
     }
 
     static isHorizontalDirection(direction) {
-        return direction.direction === HORIZONTAL;
+        return direction.direction === HORIZONTAL_DIRECTION;
     }
 
     getBallByCoords(coords) {
@@ -358,6 +360,10 @@ class Core {
             }
         }
     }
+
+    getHowManyBallColours() {
+        return HOW_MANY_BALL_COLOURS;
+    }
 }
 
-export default Core;
+export {Core, UNCHANGED_TYPE, ILLEGAL_TYPE, HORIZONTAL_DIRECTION, VERTICAL_DIRECTION, ILLEGAL_DIRECTION}

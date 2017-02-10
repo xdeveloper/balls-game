@@ -1,13 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
-import Core from './Core.js';
-import {inArray, areFieldsEqual, log} from './helpers';
+import {Core} from './engine/Core.js';
+import {inArray, areFieldsEqual, log} from './engine/helpers';
+import {HORIZONTAL_DIRECTION, ILLEGAL_DIRECTION, UNCHANGED_TYPE, VERTICAL_DIRECTION} from "./engine/Core";
 
-it('renders without crashing', () => {
+/*it('renders without crashing', () => {
     const div = document.createElement('div');
     ReactDOM.render(<App />, div);
-});
+});*/
 
 test('generates ok', () => {
     let core = new Core();
@@ -40,12 +41,12 @@ test('generate balls', () => {
 });
 
 test('detect move direction', () => {
-    expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 1, col: 0})).toEqual({direction: 'vertical'});
-    expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 0, col: 1})).toEqual({direction: 'horizontal'});
-    expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 0, col: 0})).toEqual({direction: 'illegal'}); // the same
-    expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 1, col: 1})).toEqual({direction: 'illegal'}); // diagonal
-    expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 0, col: 2})).toEqual({direction: 'illegal'}); // too far
-    expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 2, col: 2})).toEqual({direction: 'illegal'}); // diagonal too far
+    expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 1, col: 0})).toEqual({direction: VERTICAL_DIRECTION});
+    expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 0, col: 1})).toEqual({direction: HORIZONTAL_DIRECTION});
+    expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 0, col: 0})).toEqual({direction: ILLEGAL_DIRECTION}); // the same
+    expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 1, col: 1})).toEqual({direction: ILLEGAL_DIRECTION}); // diagonal
+    expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 0, col: 2})).toEqual({direction: ILLEGAL_DIRECTION}); // too far
+    expect(Core.detectMoveDirection({row: 0, col: 0}, {row: 2, col: 2})).toEqual({direction: ILLEGAL_DIRECTION}); // diagonal too far
 });
 
 test('refine balls line', () => {
@@ -183,7 +184,7 @@ test('make unchanging move vertically', () => {
     let result = core.makeMove({row: 2, col: 2}, {row: 1, col: 2});
     expect(areFieldsEqual(core.getField(), field)).toBeTruthy();
     expect(result.pos).toEqual(0);
-    expect(result.type).toEqual('unchanged');
+    expect(result.type).toEqual(UNCHANGED_TYPE);
 });
 
 test('make correct move horizontally', () => {

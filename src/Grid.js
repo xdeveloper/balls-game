@@ -1,72 +1,30 @@
 import React, {Component} from 'react';
-
-import red from './res/red.svg';
-import green from './res/green.svg';
-import blue from './res/blue.svg';
-import black from './res/black.svg';
-import purple from './res/yellow.svg';
-
-const styles = {
-    container: {
-        border: 1,
-        backgroundColor: 'yellow',
-        background: 'white'
-    }
-};
+import './css/Helpers.css';
+import Ball from "./Ball";
 
 class Grid extends Component {
 
-    constructor() {
-        super();
-    }
-
-    mapBallToBallPicture(ball) {
-        let pic;
-        switch (ball) {
-            case 1:
-                pic = red;
-                break;
-            case 2:
-                pic = green;
-                break;
-            case 3:
-                pic = blue;
-                break;
-            case 4:
-                pic = black;
-                break;
-            case 5:
-                pic = purple;
-                break;
-            default:
-                throw new Error("Can't map ball to ball picture");
-        }
-        return pic;
-    }
-
     render() {
-        let field = this.props.field;
-
-        let rowsCounter = 0;
-
-        let fld = field.map((row) => {
-
-            let colsCounter = 0;
+        let rowIndex = 0;
+        let tableRows = this.props.field.map((row) => {
+            let colIndex = 0;
             let cols = row.map(ball => {
-
-                let xml = <div key={colsCounter}>
-                    <img src={this.mapBallToBallPicture(ball)} className="App-logo" alt="logo"/>
+                let rowElements = <div key={colIndex} className="divTableCell">
+                    <Ball ball={ball} row={rowIndex} column={colIndex} clickFn={this.props.ballSelected}/>
                 </div>;
-                colsCounter++;
-                return xml;
+                colIndex++;
+                return rowElements;
             });
 
-            return <div style={{float: 'left'}} key={rowsCounter++}>{cols}</div>;
+            return <div key={rowIndex++} className="divTableRow">{cols}</div>
         });
 
-
         return (
-            <div style={styles.container}>{fld}</div>
+            <div className="divTable">
+                <div className="divTableBody">
+                    {tableRows}
+                </div>
+            </div>
         );
     }
 }

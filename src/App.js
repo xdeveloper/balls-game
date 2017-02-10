@@ -1,20 +1,22 @@
 import React, {Component} from 'react';
 import logo from './res/logo.svg';
-import './App.css';
-import Core from './Core.js';
+import './css/App.css';
+import {Core, ILLEGAL_TYPE, HORIZONTAL_DIRECTION} from './engine/Core.js';
 import Grid from './Grid.js';
-import {log} from './helpers';
+import {log} from './engine/helpers';
 
 class App extends Component {
 
     constructor() {
         super();
 
-        let core = new Core();
-        core.generate(5);
+        this.core = new Core();
+        this.core.generate(5);
+
+        this.selectedBallCoords = undefined;
 
         this.state = {
-            field: core.getField()
+            field: this.core.getField()
         }
 
     }
@@ -42,9 +44,29 @@ class App extends Component {
             [1, 3, 4, 5, 1],
         ]);
         core.refillWith({pos: 3, type: 'row'}, 8);
-
-        let field = core.getField();
     }
+
+    selectedBall(row, col) {
+        log("Clicked ball " + row + ',' + col);
+
+        if (this.from === undefined) {
+            this.from = {row, col};
+        } else {
+            log("Make move");
+
+            let moveResult = this.core.makeMove(
+                {row: this.from.row, col: this.from.col},
+                {row: row, col: col});
+
+            if (moveResult.type === ILLEGAL_TYPE) {
+                alert("Illegal move!")
+            }
+
+            this.from = undefined;
+        }
+
+    }
+
 
     render() {
 
@@ -61,7 +83,12 @@ class App extends Component {
                 <button onClick={() => this.start()}>Oloo</button>
                 <button onClick={() => this.start1()}>Oloo2</button>
 
-                <Grid field={this.state.field} />
+                <Grid
+                    field={this.state.field}
+                    howManyColours={this.core.getHowManyBallColours()}
+                    ballSelected={(row, col) => this.selectedBall(row, col)}
+                />
+
             </div>
         );
     }
