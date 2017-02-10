@@ -249,6 +249,60 @@ test('refill row (predefined value)', () => {
     ])).toBeTruthy();
 });
 
+test('refill row (2)', () => {
+    let core = new Core([
+        [1, 2, 3, 4, 5],
+        [5, 1, 2, 3, 4],
+        [4, 5, 1, 2, 3],
+        [3, 0, 0, 0, 2],
+        [1, 3, 4, 5, 1],
+    ]);
+    core.refillWith({pos: 3, type: 'row'}, 8);
+    expect(areFieldsEqual(core.getField(), [
+        [1, 8, 8, 8, 5],
+        [5, 2, 3, 4, 4],
+        [4, 1, 2, 3, 3],
+        [3, 5, 1, 2, 2],
+        [1, 3, 4, 5, 1],
+    ])).toBeTruthy();
+});
+
+test('refill row (3)', () => {
+    let core = new Core([
+        [1, 2, 3, 4, 5],
+        [5, 1, 2, 3, 4],
+        [0, 0, 0, 0, 3],
+        [3, 1, 2, 3, 2],
+        [1, 3, 4, 5, 1],
+    ]);
+    core.refillWith({pos: 2, type: 'row'}, 8);
+    expect(areFieldsEqual(core.getField(), [
+        [8, 8, 8, 8, 5],
+        [1, 2, 3, 4, 4],
+        [5, 1, 2, 3, 3],
+        [3, 1, 2, 3, 2],
+        [1, 3, 4, 5, 1],
+    ])).toBeTruthy();
+});
+
+test('refill row (4)', () => {
+    let core = new Core([
+        [1, 2, 0, 0, 0],
+        [5, 1, 2, 3, 4],
+        [3, 1, 3, 1, 3],
+        [3, 1, 2, 3, 2],
+        [1, 3, 4, 5, 1],
+    ]);
+    core.refillWith({pos: 0, type: 'row'}, 8);
+    expect(areFieldsEqual(core.getField(), [
+        [1, 2, 8, 8, 8],
+        [5, 1, 2, 3, 4],
+        [3, 1, 3, 1, 3],
+        [3, 1, 2, 3, 2],
+        [1, 3, 4, 5, 1],
+    ])).toBeTruthy();
+});
+
 test('refill column (predefined value)', () => {
     let core = new Core([
         [5, 5, 5, 5, 5, 5],
@@ -279,17 +333,11 @@ test('scan field', () => {
         [3, 5, 5, 5, 2],
         [1, 3, 4, 5, 1],
     ]);
-
-    //core.scan();
-
-    /*expect(areFieldsEqual(core.getField(), [
-     [5, 5, 7, 5, 5, 5],
-     [4, 4, 7, 4, 4, 5],
-     [3, 3, 7, 3, 3, 5],
-     [3, 3, 5, 3, 3, 5],
-     [1, 2, 4, 4, 4, 5],
-     [3, 3, 3, 1, 3, 5],
-     ])).toBeTruthy();*/
+    let fullScore = 0;
+    core.scan(function (score) {
+        fullScore += score;
+    });
+    expect(fullScore).not.toBeLessThan(30);
 });
 
 test('find score row / column', () => {

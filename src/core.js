@@ -1,8 +1,15 @@
-'use strict';
-
-import {serializeCoord, log} from './helpers';
+import {log, stop} from './helpers';
 import {range} from 'lodash';
 
+const VERTICAL = 'vertical';
+const HORIZONTAL = 'horizontal';
+const ILLEGAL = 'illegal';
+const DELETED_BALL = 0;
+const ROW_TYPE = 'row';
+const COLUMN_TYPE = 'column';
+const ILLEGAL_TYPE = 'illegal';
+const UNCHANGED_TYPE = 'unchanged';
+const SCORE_PER_BALL = 10;
 
 class Core {
 
@@ -50,7 +57,7 @@ class Core {
 
     static detectMoveDirection(firstBallCoords, secondBallCoords) {
         function neighbours(pos1, pos2) {
-            return (Math.abs(pos1 - pos2) == 1);
+            return (Math.abs(pos1 - pos2) === 1);
         }
 
         let {row: row1, col: col1} = firstBallCoords;
@@ -107,18 +114,18 @@ class Core {
      * @param value used in unit tests only, do not pass it in real code
      */
     refillWith(coords, value) {
-        let {pos: pos, type: type} = coords;
+        let {pos, type} = coords;
 
         if (type === ROW_TYPE) {
             let deletedBallsPos = Core.deletedBallsPos(this.getRow(pos));
             this._refillArea(deletedBallsPos.start, deletedBallsPos.end, pos, value);
         }
         if (type === COLUMN_TYPE) {
-            this.refillColumn(pos, value);
+            this._refillColumn(pos, value);
         }
     }
 
-    refillColumn(pos, value) {
+    _refillColumn(pos, value) {
         let column = this.getColumn(pos);
         let survivors = column.filter((ball) => ball !== DELETED_BALL);
         let newBallsLine = Core.generateBalls(column.length - survivors.length, value).concat(survivors);
@@ -128,9 +135,15 @@ class Core {
     // private method
     _refillArea(start, end, row, value) {
         function modifyRow(dest, src, start, end) {
-            let chunk = src.slice(start, end + 1);
             for (let i = start; i !== end + 1; i++) {
-                dest[i] = chunk[i];
+                dest[i] = src[i];
+            }
+        }
+
+        function modifyLastRow(dest, src, start, end) {
+            let c = 0;
+            for (let i = start; i !== end + 1; i++) {
+                dest[i] = src[c++];
             }
         }
 
@@ -139,7 +152,7 @@ class Core {
         }
 
         let newlyGeneratedBalls = Core.generateBalls(end - start + 1, value);
-        modifyRow(this.getRow(0), newlyGeneratedBalls, start, end);
+        modifyLastRow(this.getRow(0), newlyGeneratedBalls, start, end);
     }
 
     static generateBalls(howManyBalls, ball) {
@@ -272,28 +285,48 @@ class Core {
         this.field.forEach((row) => row[col] = balls[i++]);
     }
 
-    scan(scoreCallback) {
-        function workflow(found, setter, type) {
-            // Report score
-            let score = Core.calcScore(found.line);
-            scoreCallback(score);
+    _workflow(found, type, scoreCallback) {
+        // Report score
+        let score = Core.calcScore(found.line);
+        scoreCallback(score);
 
-            // Modify the field
-            setter(found.pos, found.line);
+        // Modify the field
+        if (type === ROW_TYPE) {
+            this.setRow(found.pos, found.line);
             this.refillWith({pos: found.pos, type: type});
+        }
+
+        if (type === COLUMN_TYPE) {
+            this.setColumn(found.pos, found.line);
+            this.refillWith({pos: found.pos, type: type});
+        }
+
+        log(this.field);
+        stop('we');
+    }
+
+    scan(scoreCallback) {
+        if (scoreCallback === undefined) {
+            throw new Error("Specify scoreCallback");
         }
 
         let scanRows = true;
         while (scanRows) {
-            let rowsFound = this.findScoreRow();
-            if (rowsFound !== undefined) {
-                workflow(rowsFound, this.setRow, 'row');
+            let rowFound = this.findScoreRow();
+            if (rowFound !== undefined) {
+                let score = Core.calcScore(rowFound.line);
+                scoreCallback(score);
+                this.setRow(rowFound.pos, rowFound.line);
+                this.refillWith({pos: rowFound.pos, type: ROW_TYPE});
             } else {
                 scanRows = false;
                 while (true) {
-                    let found = this.findScoreColumn();
-                    if (found !== undefined) {
-                        workflow(found, this.setColumn, 'col');
+                    let colFound = this.findScoreColumn();
+                    if (colFound !== undefined) {
+                        let score = Core.calcScore(colFound.line);
+                        scoreCallback(score);
+                        this.setRow(colFound.pos, colFound.line);
+                        this.refillWith({pos: colFound.pos, type: COLUMN_TYPE});
                     } else {
                         break;
                     }
@@ -304,7 +337,7 @@ class Core {
 
     static calcScore(row) {
         let deletedBalls = row.filter(ball => ball === DELETED_BALL);
-        return deletedBalls.reduce((acc, ball) => acc + 10, 0);
+        return deletedBalls.reduce((acc, ball) => acc + SCORE_PER_BALL, 0);
     }
 
     findScoreRow() {
@@ -325,15 +358,5 @@ class Core {
         }
     }
 }
-
-const VERTICAL = 'vertical';
-const HORIZONTAL = 'horizontal';
-const ILLEGAL = 'illegal';
-const DELETED_BALL = 0;
-
-const ROW_TYPE = 'row';
-const COLUMN_TYPE = 'column';
-const ILLEGAL_TYPE = 'illegal';
-const UNCHANGED_TYPE = 'unchanged';
 
 export default Core;
