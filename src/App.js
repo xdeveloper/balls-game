@@ -1,49 +1,21 @@
 import React, {Component} from 'react';
 import logo from './res/logo.svg';
 import './css/App.css';
-import {Core, ILLEGAL_TYPE, HORIZONTAL_DIRECTION} from './engine/Core.js';
+import {Core, ILLEGAL_TYPE} from './engine/Core.js';
 import Grid from './Grid.js';
 import {log} from './engine/helpers';
+import {COLUMN_TYPE, ILLEGAL_DIRECTION, ROW_TYPE, UNCHANGED_TYPE} from "./engine/Core";
 
 class App extends Component {
 
     constructor() {
         super();
-
         this.core = new Core();
         this.core.generate(5);
-
         this.selectedBallCoords = undefined;
-
         this.state = {
             field: this.core.getField()
         }
-
-    }
-
-    start() {
-        let core = new Core([
-            [1, 2, 3, 4, 5],
-            [5, 1, 2, 3, 4],
-            [4, 5, 1, 2, 3],
-            [3, 5, 5, 5, 2],
-            [1, 3, 4, 5, 1],
-        ]);
-
-        core.scan(function (score) {
-            log(score);
-        });
-    }
-
-    start1() {
-        let core = new Core([
-            [1, 2, 3, 4, 5],
-            [5, 1, 2, 3, 4],
-            [4, 5, 1, 2, 3],
-            [3, 0, 0, 0, 2],
-            [1, 3, 4, 5, 1],
-        ]);
-        core.refillWith({pos: 3, type: 'row'}, 8);
     }
 
     selectedBall(row, col) {
@@ -59,7 +31,28 @@ class App extends Component {
                 {row: row, col: col});
 
             if (moveResult.type === ILLEGAL_TYPE) {
-                alert("Illegal move!")
+                alert("Illegal direction (diagonal, too far)!")
+            } else if (moveResult.type === UNCHANGED_TYPE) {
+                alert("Balls will not be interchanged!")
+            } else {
+                log("New field's state: ");
+                alert(this.core.getField());
+
+                alert("Hurray!");
+
+                this.setState({field: this.core.getField()});
+
+                alert("Hurray!2");
+
+               /* if (moveResult.type === ROW_TYPE) {
+                    this.core.refillWith({pos: moveResult.pos, type: ROW_TYPE});
+                }
+
+                if (moveResult.type === COLUMN_TYPE) {
+                    this.core.refillWith({pos: moveResult.pos, type: COLUMN_TYPE});
+                }
+
+                this.setState({field: this.core.getField()});*/
             }
 
             this.from = undefined;

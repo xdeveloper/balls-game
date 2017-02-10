@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 
+import deleted from './res/white.svg';
 import red from './res/red.svg';
 import green from './res/green.svg';
 import blue from './res/blue.svg';
@@ -11,6 +12,10 @@ class Ball extends Component {
     static mapBallToBallPicture(ball) {
         let pic;
         switch (ball) {
+            case 0:
+                pic = deleted;
+                break;
+
             case 1:
                 pic = red;
                 break;
