@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
-import Core from './core.js';
+import Core from './Core.js';
 import {inArray, areFieldsEqual, log} from './helpers';
 
 it('renders without crashing', () => {

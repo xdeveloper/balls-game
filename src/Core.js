@@ -10,6 +10,7 @@ const COLUMN_TYPE = 'column';
 const ILLEGAL_TYPE = 'illegal';
 const UNCHANGED_TYPE = 'unchanged';
 const SCORE_PER_BALL = 10;
+const HOW_MANY_BALL_COLOURS = 5;
 
 class Core {
 
@@ -52,7 +53,7 @@ class Core {
     }
 
     static generateBall() {
-        return Math.floor(Math.random() * (4 - 1 + 1)) + 1;
+        return Math.floor(Math.random() * (HOW_MANY_BALL_COLOURS - 1 + 1)) + 1;
     }
 
     static detectMoveDirection(firstBallCoords, secondBallCoords) {
