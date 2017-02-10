@@ -270,3 +270,43 @@ test('refill column (predefined value)', () => {
         [3, 3, 3, 1, 3, 5],
     ])).toBeTruthy();
 });
+
+test('scan field', () => {
+    let core = new Core([
+        [1, 2, 3, 4, 5],
+        [5, 1, 2, 3, 4],
+        [4, 5, 1, 2, 3],
+        [3, 5, 5, 5, 2],
+        [1, 3, 4, 5, 1],
+    ]);
+
+    //core.scan();
+
+    /*expect(areFieldsEqual(core.getField(), [
+     [5, 5, 7, 5, 5, 5],
+     [4, 4, 7, 4, 4, 5],
+     [3, 3, 7, 3, 3, 5],
+     [3, 3, 5, 3, 3, 5],
+     [1, 2, 4, 4, 4, 5],
+     [3, 3, 3, 1, 3, 5],
+     ])).toBeTruthy();*/
+});
+
+test('find score row / column', () => {
+    let core = new Core([
+        [1, 2, 3, 4, 4],
+        [5, 1, 2, 3, 4],
+        [4, 5, 1, 4, 4],
+        [3, 5, 5, 5, 2],
+        [1, 3, 4, 5, 1],
+    ]);
+
+    expect(core.findScoreRow()).toEqual({"line": [3, 0, 0, 0, 2], "pos": 3});
+    expect(core.findScoreColumn()).toEqual({"line": [0, 0, 0, 2, 1], "pos": 4});
+});
+
+test('calc score', () => {
+    expect(Core.calcScore([1, 2])).toEqual(0);
+    expect(Core.calcScore([1, 0])).toEqual(10); // no protection from too short sequences
+    expect(Core.calcScore([1, 0, 0, 0])).toEqual(30);
+});

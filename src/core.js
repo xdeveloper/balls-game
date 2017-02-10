@@ -11,6 +11,10 @@ class Core {
         this.field = field;
     }
 
+    /**
+     * Generates the field of n x n size
+     * @param n size of field
+     */
     generate(n) {
         if (n < 5) {
             throw new Error("Size of field must be 5 x 5 minimum");
@@ -71,24 +75,24 @@ class Core {
 
         let result = {pos: 0, type: UNCHANGED_TYPE};
 
-        if (this.isIllegalDirection(direction)) {
+        if (Core.isIllegalDirection(direction)) {
             console.log("Illegal Move Direction");
             result = {pos: 0, type: ILLEGAL_TYPE};
-        } else if (this.isVerticalDirection(direction)) {
+        } else if (Core.isVerticalDirection(direction)) {
             let ballsRow = this.copyRow(toBallCoords.row);
             ballsRow[toBallCoords.col] = this.getBallByCoords(fromBallCoords);
             this.swapBallsOnField(fromBallCoords, toBallCoords);
             let refined = Core.refineBallsLine(ballsRow);
-            if (this.containsDeletedBalls(refined)) {
+            if (Core.containsDeletedBalls(refined)) {
                 this.setRow(toBallCoords.row, refined);
                 result = {pos: toBallCoords.row, type: ROW_TYPE};
             }
-        } else if (this.isHorizontalDirection(direction)) {
+        } else if (Core.isHorizontalDirection(direction)) {
             let ballsColumn = this.copyColumn(toBallCoords.col);
             ballsColumn[toBallCoords.row] = this.getBallByCoords(fromBallCoords);
             this.swapBallsOnField(fromBallCoords, toBallCoords);
             let refined = Core.refineBallsLine(ballsColumn);
-            if (this.containsDeletedBalls(refined)) {
+            if (Core.containsDeletedBalls(refined)) {
                 this.setColumn(toBallCoords.col, refined);
                 result = {pos: toBallCoords.col, type: COLUMN_TYPE};
             }
@@ -97,13 +101,17 @@ class Core {
         return result;
     }
 
-    // For unit testing
+    /**
+     *
+     * @param coords
+     * @param value used in unit tests only, do not pass it in real code
+     */
     refillWith(coords, value) {
         let {pos: pos, type: type} = coords;
 
         if (type === ROW_TYPE) {
             let deletedBallsPos = Core.deletedBallsPos(this.getRow(pos));
-            this.refillArea(deletedBallsPos.start, deletedBallsPos.end, pos, value);
+            this._refillArea(deletedBallsPos.start, deletedBallsPos.end, pos, value);
         }
         if (type === COLUMN_TYPE) {
             this.refillColumn(pos, value);
@@ -117,10 +125,11 @@ class Core {
         this.setColumn(pos, newBallsLine);
     }
 
-    refillArea(start, end, row, value) {
+    // private method
+    _refillArea(start, end, row, value) {
         function modifyRow(dest, src, start, end) {
             let chunk = src.slice(start, end + 1);
-            for (let i = start; i != end + 1; i++) {
+            for (let i = start; i !== end + 1; i++) {
                 dest[i] = chunk[i];
             }
         }
@@ -135,7 +144,7 @@ class Core {
 
     static generateBalls(howManyBalls, ball) {
         let generator = ball === undefined ? Core.generateBall : () => ball;
-        return range(howManyBalls).map(generator)
+        return range(howManyBalls).map(generator);
     }
 
     static deletedBallsPos(ballsLine) {
@@ -164,15 +173,15 @@ class Core {
         this.setBallByCoords(toBallCoords, fromBall);
     }
 
-    isIllegalDirection(direction) {
+    static isIllegalDirection(direction) {
         return direction.direction === ILLEGAL;
     }
 
-    isVerticalDirection(direction) {
+    static isVerticalDirection(direction) {
         return direction.direction === VERTICAL;
     }
 
-    isHorizontalDirection(direction) {
+    static isHorizontalDirection(direction) {
         return direction.direction === HORIZONTAL;
     }
 
@@ -228,7 +237,7 @@ class Core {
         let start = 0;
         let end;
 
-        for (var i = 1; i < ballsLine.length; i++) {
+        for (let i = 1; i < ballsLine.length; i++) {
             let current = ballsLine[i];
             if (buffer.includes(current)) {
                 buffer.push(current);
@@ -246,8 +255,8 @@ class Core {
         return makeNewLineIfNeeded(buffer, ballsLine);
     }
 
-    containsDeletedBalls(line) {
-        return line.indexOf(DELETED_BALL) != -1;
+    static containsDeletedBalls(line) {
+        return line.indexOf(DELETED_BALL) !== -1;
     }
 
     setRow(row, balls) {
@@ -255,12 +264,65 @@ class Core {
     }
 
     setColumn(col, balls) {
-        if (this.field.length != balls.length) {
+        if (this.field.length !== balls.length) {
             return;
         }
 
         let i = 0;
         this.field.forEach((row) => row[col] = balls[i++]);
+    }
+
+    scan(scoreCallback) {
+        function workflow(found, setter, type) {
+            // Report score
+            let score = Core.calcScore(found.line);
+            scoreCallback(score);
+
+            // Modify the field
+            setter(found.pos, found.line);
+            this.refillWith({pos: found.pos, type: type});
+        }
+
+        let scanRows = true;
+        while (scanRows) {
+            let rowsFound = this.findScoreRow();
+            if (rowsFound !== undefined) {
+                workflow(rowsFound, this.setRow, 'row');
+            } else {
+                scanRows = false;
+                while (true) {
+                    let found = this.findScoreColumn();
+                    if (found !== undefined) {
+                        workflow(found, this.setColumn, 'col');
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    static calcScore(row) {
+        let deletedBalls = row.filter(ball => ball === DELETED_BALL);
+        return deletedBalls.reduce((acc, ball) => acc + 10, 0);
+    }
+
+    findScoreRow() {
+        for (let i = this.field.length - 1; i > -1; i--) {
+            let refined = Core.refineBallsLine(this.getRow(i));
+            if (Core.containsDeletedBalls(refined)) {
+                return {line: refined, pos: i};
+            }
+        }
+    }
+
+    findScoreColumn() {
+        for (let i = this.field.length - 1; i > -1; i--) {
+            let refined = Core.refineBallsLine(this.getColumn(i));
+            if (Core.containsDeletedBalls(refined)) {
+                return {line: refined, pos: i};
+            }
+        }
     }
 }
 
