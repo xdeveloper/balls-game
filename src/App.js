@@ -8,9 +8,9 @@ import {ILLEGAL_THE_SAME_BALLS_TYPE, UNCHANGED_TYPE} from "./engine/Core";
 import MessageBox from "./MessageBox";
 import ScoreBox from "./ScoreBox";
 
-// GET - list top 10
-// POST - save new score
-const SAVE_USER_SCORE_ENDPOINT = 'http://localhost:8080/score';
+// Replace with something else
+// GET, POST
+const SAVE_USER_SCORE_ENDPOINT = 'http://cors.io/?http://localhost:8080/score';
 
 class App extends Component {
     constructor() {
@@ -23,7 +23,6 @@ class App extends Component {
 
     initialize() {
         this.generateField();
-        this.selectedBallCoords = undefined;
         this.field = this.core.getField();
 
         this.initialState = {
@@ -102,7 +101,7 @@ class App extends Component {
 
         // Save to server
         let xhr = new XMLHttpRequest();
-        let body = 'name=' + this.state.playerName + '&score=' + this.state.score;
+        let body = 'playerName=' + this.state.playerName + '&score=' + this.state.score;
         xhr.open("POST", SAVE_USER_SCORE_ENDPOINT, true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         let onloadFn = function (e) {
@@ -158,12 +157,11 @@ class App extends Component {
 
         let gameArea = this.state.gameOver ? gameOverArea : mainArea;
 
-
         return (
             <div className="App" style={{width: '100%'}}>
                 <div className="App-header">
                     <img src={logo_game} className="App-logo-static" alt="logo"/>
-                    <h2>React-based Balls Game</h2>
+                    <h2>Balls Game (featured by React)</h2>
                 </div>
                 <br />
                 <ScoreBox score={this.state.score}/>
