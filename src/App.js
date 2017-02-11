@@ -1,29 +1,38 @@
 import React, {Component} from 'react';
-import logo from './res/logo.svg';
+import logo_game from './res/logo-game.jpg';
 import './css/App.css';
 import {Core, ILLEGAL_TYPE} from './engine/Core.js';
 import Grid from './Grid.js';
 import {log} from './engine/helpers';
-import {ILLEGAL_THE_SAME_BALLS_TYPE, ROW_TYPE, UNCHANGED_TYPE} from "./engine/Core";
+import {ILLEGAL_THE_SAME_BALLS_TYPE, UNCHANGED_TYPE} from "./engine/Core";
 import MessageBox from "./MessageBox";
 import ScoreBox from "./ScoreBox";
 
 class App extends Component {
-
     constructor() {
         super();
 
         this.core = new Core();
+        this.initialize();
+        this.handleUserNameChange = this.handleUserNameChange.bind(this);
+    }
+
+    initialize() {
         this.core.generate(5);
         this.selectedBallCoords = undefined;
         this.score = 0;
         this.field = this.core.getField();
-        this.state = {
+
+        this.initialState = {
+            playerName: 'Player1',
+            gameOver: false,
             message: 'Click 2 balls to swap',
             messageImportant: false,
             field: this.field,
             score: this.score
-        }
+        };
+
+        this.state = this.initialState;
     }
 
     showMessage(message, messageImportant = false) {
@@ -77,6 +86,7 @@ class App extends Component {
                         this.showMessage("Make your move", true);
                     } else {
                         this.showMessage("Game over!", true);
+                        this.setState({gameOver: true});
                     }
                 }, 300);
             }
@@ -86,22 +96,60 @@ class App extends Component {
 
     }
 
+    saveAndStartAgain() {
+        // do save (server) ... todo
+
+        // in case of OK - start again todo
+
+        this.setState(this.initialState);
+    }
+
+    handleUserNameChange(event) {
+        this.setState({playerName: event.target.value});
+    }
+
     render() {
-        return (
-            <div className="App">
-                <div className="App-header">
-                    <img src={logo} className="App-logo" alt="logo"/>
-                    <h2>React-based Balls Game</h2>
-                </div>
-                <br />
-                <ScoreBox score={this.state.score}/>
-                <hr />
-                <MessageBox message={this.state.message} important={this.state.messageImportant}/>
-                <br />
+
+        let mainArea = <div>
+            <br />
+            <center>
                 <Grid
                     field={this.field}
                     howManyColours={this.core.getHowManyBallColours()}
                     ballSelected={(row, col) => this.selectedBall(row, col)}/>
+            </center>
+        </div>;
+
+
+        var top_10_players = 'Fill this ...';
+
+        let gameOverArea = <div>
+            Top 10 players:
+            {top_10_players}
+            <hr />
+            Your name, please
+
+            <input type="text" value={this.state.playerName} onChange={this.handleUserNameChange}/>
+
+            <br />
+            <br />
+            <button onClick={() => this.saveAndStartAgain()}>Save and start again</button>
+        </div>;
+
+        let gameArea = this.state.gameOver ? gameOverArea : mainArea;
+
+
+        return (
+            <div className="App" style={{width: '100%'}}>
+                <div className="App-header">
+                    <img src={logo_game} className="App-logo-static" alt="logo"/>
+                    <h2>React-based Balls Game</h2>
+                </div>
+                <br />
+                <ScoreBox score={this.state.score}/>
+                <MessageBox message={this.state.message} important={this.state.messageImportant}/>
+                <br />
+                {gameArea}
             </div>
         );
     }
