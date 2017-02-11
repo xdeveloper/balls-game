@@ -29,15 +29,8 @@ function stop(message) {
     throw new Error("Stopped after " + message);
 }
 
-var add = (function () {
-    var counter = 0;
-    return function () {
-        if (counter !== 10) {
-            return counter += 1;
-        } else {
-            throw new Error("Stopped after ");
-        }
-    }
-})(10);
+function sessionStorageLog(val) {
+    sessionStorage.setItem('ua-com-abakumov-balls-game', val);
+}
 
-export {log, add, stop, inArray, areFieldsEqual, serializeCoord};
+export {log, sessionStorageLog, stop, inArray, areFieldsEqual, serializeCoord};

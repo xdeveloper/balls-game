@@ -44,7 +44,7 @@ class Ball extends Component {
                 onClick={() => this.props.clickFn(this.props.row, this.props.column)}
                 src={Ball.mapBallToBallPicture(this.props.ball)}
                 alt="[X]"
-                title="Select Ball"
+                title={"Select Ball " + this.props.ball}
                 className="Ball"/>
         );
     }
