@@ -8,6 +8,10 @@ import {ILLEGAL_THE_SAME_BALLS_TYPE, UNCHANGED_TYPE} from "./engine/Core";
 import MessageBox from "./MessageBox";
 import ScoreBox from "./ScoreBox";
 
+// GET - list top 10
+// POST - save new score
+const SAVE_USER_SCORE_ENDPOINT = 'http://localhost:8080/score';
+
 class App extends Component {
     constructor() {
         super();
@@ -18,9 +22,8 @@ class App extends Component {
     }
 
     initialize() {
-        this.core.generate(5);
+        this.generateField();
         this.selectedBallCoords = undefined;
-        this.score = 0;
         this.field = this.core.getField();
 
         this.initialState = {
@@ -29,10 +32,14 @@ class App extends Component {
             message: 'Click 2 balls to swap',
             messageImportant: false,
             field: this.field,
-            score: this.score
+            score: 0
         };
 
         this.state = this.initialState;
+    }
+
+    generateField() {
+        this.core.generate(5);
     }
 
     showMessage(message, messageImportant = false) {
@@ -41,14 +48,7 @@ class App extends Component {
 
     scoreCallback(score) {
         log("New score! " + score);
-        this.score += score;
-        this.setState({score: this.score});
-        this.setState({field: this.core.getField()});
-
-        // TODO!
-        if (this.score > 200) {
-            return true;
-        }
+        this.setState({score: this.state.score += score, field: this.core.getField()});
     }
 
     updateFieldCallback() {
@@ -73,9 +73,9 @@ class App extends Component {
             if (moveResult.type === ILLEGAL_TYPE) {
                 this.showMessage("Illegal direction (diagonal move or balls are too far from each other)!", true);
             } else if (moveResult.type === UNCHANGED_TYPE) {
-                this.showMessage("Balls will not be interchanged!", true);
+                this.showMessage("Balls will not swap", true);
             } else if (moveResult.type === ILLEGAL_THE_SAME_BALLS_TYPE) {
-                this.showMessage("You' re trying to swap ball with the same colour", true);
+                this.showMessage("You' re trying to swap balls with the same colours", true);
             } else {
                 this.showMessage("Correct move!");
                 this.deferredCall(() => {
@@ -97,10 +97,34 @@ class App extends Component {
     }
 
     saveAndStartAgain() {
-        // do save (server) ... todo
+        log(this.state.score);
+        log(this.state.playerName);
 
-        // in case of OK - start again todo
+        // Save to server
+        let xhr = new XMLHttpRequest();
+        let body = 'name=' + this.state.playerName + '&score=' + this.state.score;
+        xhr.open("POST", SAVE_USER_SCORE_ENDPOINT, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        let onloadFn = function (e) {
+            this.showMessage('Saved');
+        };
+        let onerrorFn = function (e) {
+            this.showMessage('Error saving to server', true);
+        };
+        xhr.onload = onloadFn.bind(this);
+        xhr.onerror = onerrorFn.bind(this);
+        xhr.send(body);
 
+        this.resetGame();
+    }
+
+    startAgain() {
+        this.showMessage('Game restarted without saving');
+        this.resetGame();
+    }
+
+    resetGame() {
+        this.generateField();
         this.setState(this.initialState);
     }
 
@@ -109,7 +133,6 @@ class App extends Component {
     }
 
     render() {
-
         let mainArea = <div>
             <br />
             <center>
@@ -120,20 +143,17 @@ class App extends Component {
             </center>
         </div>;
 
-
-        var top_10_players = 'Fill this ...';
+        let top_10_players = 'Fill this ...';
 
         let gameOverArea = <div>
             Top 10 players:
             {top_10_players}
             <hr />
-            Your name, please
-
-            <input type="text" value={this.state.playerName} onChange={this.handleUserNameChange}/>
-
+            Your name, please <input type="text" value={this.state.playerName} onChange={this.handleUserNameChange}/>
             <br />
             <br />
             <button onClick={() => this.saveAndStartAgain()}>Save and start again</button>
+            <button onClick={() => this.startAgain()}>Just start again</button>
         </div>;
 
         let gameArea = this.state.gameOver ? gameOverArea : mainArea;

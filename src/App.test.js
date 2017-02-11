@@ -283,10 +283,10 @@ test('scan field', () => {
         [1, 3, 4, 5, 1],
     ]);
     let fullScore = 0;
-    /*core.scan(function (score) {
-     fullScore += score;
-     });
-     expect(fullScore).not.toBeLessThan(30);*/
+    core.scan(function (score) {
+        fullScore += score;
+    });
+    expect(fullScore).not.toBeLessThan(30);
 });
 
 test('find score row / column', () => {
