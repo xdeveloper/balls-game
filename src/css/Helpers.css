@@ -1,7 +1,9 @@
 /* DivTable.com */
 .divTable{
+    border: 1px solid rgba(239, 239, 239, 0.49);
     display: table;
     /*width: 100%;*/
+    box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 .divTableRow {
     display: table-row;
@@ -11,7 +13,7 @@
     display: table-header-group;
 }
 .divTableCell, .divTableHead {
-    border: 1px solid #999999;
+    border: 1px solid rgba(0, 13, 153, 0.05);
     display: table-cell;
     padding: 3px 10px;
 }

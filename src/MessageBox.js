@@ -1,19 +1,16 @@
 import React, {Component} from 'react';
 import './css/Helpers.css';
-import Ball from "./Ball";
 
 const style = {
     normal: {
-        color: 'white',
+        color: 'gray',
         fontSize: 20,
         fontWeight: 'bold',
-        backgroundColor: 'lightgray'
     },
     important: {
         color: 'red',
         fontSize: 20,
         fontWeight: 'bold',
-        backgroundColor: 'lightgray'
     }
 };
 

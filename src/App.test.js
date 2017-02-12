@@ -3,13 +3,13 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import {Core} from './engine/Core.js';
 import {inArray, areFieldsEqual, log} from './engine/helpers';
-import {CHANGED_TYPE, HORIZONTAL_DIRECTION, ILLEGAL_DIRECTION, UNCHANGED_TYPE, VERTICAL_DIRECTION} from "./engine/Core";
+import {CHANGED_TYPE, HORIZONTAL_DIRECTION, ILLEGAL_DIRECTION, VERTICAL_DIRECTION} from "./engine/Core";
 import {groupBy} from "lodash";
 
-/*it('renders without crashing', () => {
- const div = document.createElement('div');
- ReactDOM.render(<App />, div);
- });*/
+it('renders without crashing', () => {
+    const div = document.createElement('div');
+    ReactDOM.render(<App />, div);
+});
 
 test('generates ok', () => {
     let core = new Core();
@@ -403,8 +403,6 @@ test('can make next move in the smallest group (r - types)', () => {
         [0, 0, 5],
         [0, 0, 5]
     ]), 0)).toBeTruthy();
-
-
 });
 
 test('can make next move in the smallest group (v - types)', () => {

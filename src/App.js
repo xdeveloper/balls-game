@@ -7,10 +7,11 @@ import {log} from './engine/helpers';
 import {ILLEGAL_THE_SAME_BALLS_TYPE, UNCHANGED_TYPE} from "./engine/Core";
 import MessageBox from "./MessageBox";
 import ScoreBox from "./ScoreBox";
+import Top10Players from "./Top10Players";
 
 // Replace with something else
 // GET, POST
-const SAVE_USER_SCORE_ENDPOINT = 'http://cors.io/?http://localhost:8080/score';
+export const SAVE_USER_SCORE_ENDPOINT = 'http://localhost:8080/score';
 
 class App extends Component {
     constructor() {
@@ -87,39 +88,42 @@ class App extends Component {
                         this.showMessage("Game over!", true);
                         this.setState({gameOver: true});
                     }
-                }, 300);
+                }, 500);
             }
 
             this.from = undefined;
         }
-
     }
 
     saveAndStartAgain() {
         log(this.state.score);
         log(this.state.playerName);
 
-        // Save to server
+        this.saveScore();
+        this.resetGame();
+    }
+
+    saveScore() {
         let xhr = new XMLHttpRequest();
         let body = 'playerName=' + this.state.playerName + '&score=' + this.state.score;
         xhr.open("POST", SAVE_USER_SCORE_ENDPOINT, true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        let onloadFn = function (e) {
+        xhr.onload = function (e) {
             this.showMessage('Saved');
-        };
-        let onerrorFn = function (e) {
+        }.bind(this);
+        xhr.onerror = function (e) {
             this.showMessage('Error saving to server', true);
-        };
-        xhr.onload = onloadFn.bind(this);
-        xhr.onerror = onerrorFn.bind(this);
+        }.bind(this);
         xhr.send(body);
-
-        this.resetGame();
     }
 
     startAgain() {
         this.showMessage('Game restarted without saving');
         this.resetGame();
+    }
+
+    gameOver() {
+        this.setState({gameOver: true});
     }
 
     resetGame() {
@@ -132,7 +136,7 @@ class App extends Component {
     }
 
     render() {
-        let mainArea = <div>
+        let gameArea = <div>
             <br />
             <center>
                 <Grid
@@ -140,13 +144,13 @@ class App extends Component {
                     howManyColours={this.core.getHowManyBallColours()}
                     ballSelected={(row, col) => this.selectedBall(row, col)}/>
             </center>
+            <br/>
+            <button onClick={() => this.gameOver()}>End Current Game</button>
         </div>;
-
-        let top_10_players = 'Fill this ...';
 
         let gameOverArea = <div>
             Top 10 players:
-            {top_10_players}
+            <Top10Players troubleHandler={(mess) => this.showMessage(mess, true)}/>
             <hr />
             Your name, please <input type="text" value={this.state.playerName} onChange={this.handleUserNameChange}/>
             <br />
@@ -155,19 +159,14 @@ class App extends Component {
             <button onClick={() => this.startAgain()}>Just start again</button>
         </div>;
 
-        let gameArea = this.state.gameOver ? gameOverArea : mainArea;
-
         return (
             <div className="App" style={{width: '100%'}}>
-                <div className="App-header">
-                    <img src={logo_game} className="App-logo-static" alt="logo"/>
-                    <h2>Balls Game (featured by React)</h2>
-                </div>
-                <br />
+                <img src={logo_game} className="App-logo-static" alt="logo"/>
+                <h1>Balls</h1>
                 <ScoreBox score={this.state.score}/>
                 <MessageBox message={this.state.message} important={this.state.messageImportant}/>
                 <br />
-                {gameArea}
+                {this.state.gameOver ? gameOverArea : gameArea}
             </div>
         );
     }

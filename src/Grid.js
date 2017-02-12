@@ -20,11 +20,13 @@ class Grid extends Component {
         });
 
         return (
+
             <div className="divTable">
                 <div className="divTableBody">
                     {tableRows}
                 </div>
             </div>
+
         );
     }
 }
