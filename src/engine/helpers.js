@@ -5,6 +5,10 @@ function inArray(needle, haystack) {
 }
 
 function areFieldsEqual(arr1, arr2) {
+    if (!(arr1 && arr2)) {
+        throw new Error('Check your arrays');
+    }
+
     if (arr1.length !== arr2.length) {
         return false;
     }
@@ -24,6 +28,16 @@ function log(message) {
     console.log(message)
 }
 
+function logIf(predicate, message) {
+    if (predicate) {
+        log(message);
+    }
+}
+
+function logIfNot(predicate, message) {
+    logIf(!predicate, message);
+}
+
 function stop(message) {
     console.log(message);
     throw new Error("Stopped after " + message);
@@ -33,4 +47,4 @@ function sessionStorageLog(val) {
     sessionStorage.setItem('ua-com-abakumov-balls-game', val);
 }
 
-export {log, sessionStorageLog, stop, inArray, areFieldsEqual, serializeCoord};
+export {log, logIf, logIfNot, sessionStorageLog, stop, inArray, areFieldsEqual, serializeCoord};

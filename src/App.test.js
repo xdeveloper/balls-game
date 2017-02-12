@@ -4,6 +4,7 @@ import App from './App';
 import {Core} from './engine/Core.js';
 import {inArray, areFieldsEqual, log} from './engine/helpers';
 import {CHANGED_TYPE, HORIZONTAL_DIRECTION, ILLEGAL_DIRECTION, UNCHANGED_TYPE, VERTICAL_DIRECTION} from "./engine/Core";
+import {groupBy} from "lodash";
 
 /*it('renders without crashing', () => {
  const div = document.createElement('div');
@@ -307,4 +308,148 @@ test('calc score', () => {
     expect(Core.calcScore([1, 0])).toEqual(10); // no protection from too short sequences
     expect(Core.calcScore([1, 0, 0, 0])).toEqual(30);
     expect(Core.calcScore([3, 3, 0, 0, 0])).toEqual(30);
+});
+
+test('can make next move', () => {
+    let core = new Core([
+        [5, 2, 3, 4, 5],
+        [5, 1, 2, 3, 4],
+        [4, 5, 1, 2, 5],
+        [3, 1, 5, 5, 2],
+        [1, 3, 4, 5, 5]]);
+
+    let canMakeNextMove = core.canMakeNextMove();
+
+    log(canMakeNextMove);
+
+    expect(canMakeNextMove).toBeTruthy();
+});
+
+test('can make next move in the smallest group (r - types)', () => {
+    expect(Core._canMakeNextMove(([
+        [5, 5, 0],
+        [0, 0, 5],
+        [0, 0, 0]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [5, 0, 0],
+        [5, 0, 5],
+        [0, 5, 0]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [0, 0, 5],
+        [0, 0, 5],
+        [0, 5, 0]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [0, 5, 5],
+        [5, 0, 0],
+        [0, 0, 0]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [0, 5, 0],
+        [5, 0, 0],
+        [5, 0, 0]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [0, 0, 0],
+        [0, 0, 5],
+        [5, 5, 0]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [0, 0, 5],
+        [0, 5, 0],
+        [0, 5, 0]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [5, 0, 0],
+        [0, 5, 0],
+        [0, 5, 0]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [0, 0, 0],
+        [0, 5, 5],
+        [5, 0, 0]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [5, 0, 0],
+        [0, 5, 5],
+        [0, 0, 0]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [0, 0, 5],
+        [5, 5, 0],
+        [0, 0, 0]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [0, 0, 0],
+        [5, 0, 0],
+        [0, 5, 5]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [0, 5, 0],
+        [0, 0, 5],
+        [0, 0, 5]
+    ]), 0)).toBeTruthy();
+
+
+});
+
+test('can make next move in the smallest group (v - types)', () => {
+    expect(Core._canMakeNextMove(([
+        [5, 0, 5],
+        [0, 5, 0],
+        [0, 0, 0]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [0, 0, 5],
+        [0, 5, 0],
+        [0, 0, 5]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [0, 0, 0],
+        [0, 5, 0],
+        [5, 0, 5]
+    ]), 0)).toBeTruthy();
+
+    expect(Core._canMakeNextMove(([
+        [5, 0, 0],
+        [0, 5, 0],
+        [5, 0, 0]
+    ]), 0)).toBeTruthy();
+});
+
+test('copy3x3Field', () => {
+    let core = new Core([
+        [1, 8, 8, 4, 5],
+        [5, 2, 3, 3, 4],
+        [4, 1, 2, 2, 5],
+        [3, 1, 5, 5, 2],
+        [1, 3, 4, 5, 5]]);
+
+    expect(areFieldsEqual(core._copy3x3Field({row: 0, col: 0}), [
+        [1, 8, 8],
+        [5, 2, 3],
+        [4, 1, 2],
+    ])).toBeTruthy();
+
+    expect(areFieldsEqual(core._copy3x3Field({row: 2, col: 2}), [
+        [2, 2, 5],
+        [5, 5, 2],
+        [4, 5, 5],
+    ])).toBeTruthy();
 });

@@ -1,5 +1,5 @@
-import {log, stop} from './helpers';
-import {range} from 'lodash';
+import {log, logIf, stop} from './helpers';
+import {every, filter, find, flatten, range, uniq} from 'lodash';
 
 const VERTICAL_DIRECTION = 'vertical-direction';
 const HORIZONTAL_DIRECTION = 'horizontal-direction';
@@ -144,19 +144,15 @@ class Core {
         return result;
     }
 
-    canMakeNextMove() {
-        return false;
-    }
-
     /**
      * Refill some area with new balls
      *
      * @param coords - coordinate of position to refill
      * @param coords.pos {Number} position
      * @param coords.type {(ROW_TYPE|COLUMN_TYPE)} } type
-     * @param value {Number|String|undefined} (used in unit tests only, do not pass it in real code)
+     * @param value {Number|undefined} (used in unit tests only, do not pass it in real code)
      */
-    refillWith(coords, value) {
+    refillWith(coords, value = undefined) {
         let {pos, type} = coords;
 
         if (type === ROW_TYPE) {
@@ -223,20 +219,19 @@ class Core {
 
     /**
      *
-     * @param from {row: x, col: y}
-     * @param to {row: x, col: y}
+     * @param from
+     * @param from.row {number}
+     * @param from.col {number}
+     *
+     * @param to
+     * @param to.row {number}
+     * @param to.col {number}
      */
     swapBallsOnField(from, to) {
-        log("Field before swap");
-        log(this.getField());
-
         let fromBall = this.getBall(from);
         let toBall = this.getBall(to);
         this.setBall(from, toBall);
         this.setBall(to, fromBall);
-
-        log("Field after swap");
-        log(this.getField());
     }
 
     getBall(coords) {
@@ -320,39 +315,34 @@ class Core {
         this.field.forEach((row) => row[col] = balls[i++]);
     }
 
-    scan(scoreCallback, updatedFieldCallback) {
-        if (scoreCallback === undefined) {
-            throw new Error("Specify scoreCallback");
-        }
+    scan(scoreCallback = () => {
+    }, updatedFieldCallback = () => {
+    }) {
+
+        let process = function (line, setter, refillType) {
+            let score = Core.calcScore(line.line);
+            if (scoreCallback(score, line.pos, ROW_TYPE, line.line)) {
+                log('User stopped scan');
+                return;
+            }
+            setter = setter.bind(this);
+            setter(line.pos, line.line);
+            updatedFieldCallback();
+            this.refillWith({pos: line.pos, type: refillType});
+
+        }.bind(this);
 
         let scanRows = true;
         while (scanRows) {
             let rowFound = this.findScoreRow();
             if (rowFound !== undefined) {
-                let score = Core.calcScore(rowFound.line);
-                let r = scoreCallback(score, rowFound.pos, ROW_TYPE, rowFound.line);
-                if (r) return;
-
-                this.setRow(rowFound.pos, rowFound.line);
-                if (updatedFieldCallback !== undefined) {
-                    updatedFieldCallback();
-                }
-                this.refillWith({pos: rowFound.pos, type: ROW_TYPE});
+                if (process(rowFound, this.setRow, ROW_TYPE)) return;
             } else {
                 scanRows = false;
                 while (true) {
                     let colFound = this.findScoreColumn();
                     if (colFound !== undefined) {
-                        let colFoundLine = colFound.line;
-                        let score = Core.calcScore(colFoundLine);
-                        let r = scoreCallback(score, colFound.pos, COLUMN_TYPE, colFoundLine);
-                        if (r) return;
-
-                        this.setColumn(colFound.pos, colFoundLine);
-                        if (updatedFieldCallback !== undefined) {
-                            updatedFieldCallback();
-                        }
-                        this.refillWith({pos: colFound.pos, type: COLUMN_TYPE});
+                        if (process(colFound, this.setColumn, COLUMN_TYPE)) return;
                     } else {
                         break;
                     }
@@ -362,31 +352,114 @@ class Core {
     }
 
     static calcScore(row) {
-        let deletedBalls = row.filter(ball => ball === DELETED_BALL);
-        let result = deletedBalls.reduce((acc, ball) => acc + SCORE_PER_BALL, 0);
-        return result;
+        return row.filter(ball => ball === DELETED_BALL).reduce((acc, ball) => acc + SCORE_PER_BALL, 0);
+    }
+
+    /**
+     *  Finds pos of row or column with score and transforms it to score row (filled with deleted balls)
+     *  @param getter {Function}
+     * @returns {{line: *, pos: number}} or undefined
+     */
+    _findScore(getter) {
+        for (let i = this.field.length - 1; i > -1; i--) {
+            let line = getter.call(this, i);
+            if (Core.containsDeletedBalls(Core.refineBallsLine(line))) {
+                return {line: Core.refineBallsLine(line), pos: i};
+            }
+        }
+        return undefined;
     }
 
     findScoreRow() {
-        for (let i = this.field.length - 1; i > -1; i--) {
-            let refined = Core.refineBallsLine(this.getRow(i));
-            if (Core.containsDeletedBalls(refined)) {
-                return {line: refined, pos: i};
-            }
-        }
+        return this._findScore(this.getRow);
     }
 
     findScoreColumn() {
-        for (let i = this.field.length - 1; i > -1; i--) {
-            let refined = Core.refineBallsLine(this.getColumn(i));
-            if (Core.containsDeletedBalls(refined)) {
-                return {line: refined, pos: i};
-            }
-        }
+        return this._findScore(this.getColumn);
     }
 
     getHowManyBallColours() {
         return HOW_MANY_BALL_COLOURS;
+    }
+
+    _copy3x3Field(pos) {
+        let _3x3Field = [];
+        range(3).forEach((rOffset) => {
+            let _row = [];
+            range(3).forEach((cOffset) => {
+                _row.push(this.getBall({row: pos.row + rOffset, col: pos.col + cOffset}));
+            });
+            _3x3Field.push(_row);
+        });
+        return _3x3Field;
+    }
+
+    canMakeNextMove() {
+        let rng = range(this.getField().length - 2);
+        return !every(rng, (r) => {
+            return every(rng, (c) => {
+                let can = Core._canMakeNextMove(this._copy3x3Field({row: r, col: c}));
+                if (can) {
+                    return false;
+                }
+            });
+        });
+    }
+
+    static _cannotMakeNextMove(_3x3Field, ballToIgnore = undefined) {
+        return !this._canMakeNextMove(_3x3Field, ballToIgnore);
+    }
+
+    static _canMakeNextMove(_3x3Field, ballToIgnore = undefined) {
+        let figIndex = 1;
+
+        function matchFigure(_1, _2, _3, ball) {
+            let [r1, c1] = _1;
+            let [r2, c2] = _2;
+            let [r3, c3] = _3;
+            let match = _3x3Field[r1][c1] === ball && _3x3Field[r2][c2] === ball && _3x3Field[r3][c3] === ball;
+
+            logIf(false, "Found figure (type = " + figIndex + ")");
+            figIndex++;
+            return match;
+        }
+
+        let uniqueBalls = uniq(flatten(_3x3Field));
+
+        if (ballToIgnore !== undefined) {
+            uniqueBalls = filter(uniqueBalls, (ball) => ball !== ballToIgnore);
+        }
+
+        let foundBall = find(uniqueBalls, (ball) => {
+            let matchRTypes =
+                matchFigure([0, 0], [0, 1], [1, 2], ball) ||
+                matchFigure([0, 0], [1, 0], [2, 1], ball) ||
+                matchFigure([0, 2], [1, 2], [2, 1], ball) ||
+                matchFigure([0, 2], [0, 1], [1, 0], ball) ||
+                matchFigure([0, 1], [1, 0], [2, 0], ball) ||
+                matchFigure([1, 2], [2, 1], [2, 0], ball) ||
+                matchFigure([0, 2], [1, 1], [2, 1], ball) ||
+                matchFigure([0, 0], [1, 1], [2, 1], ball) ||
+                matchFigure([1, 2], [1, 1], [2, 0], ball) ||
+                matchFigure([0, 0], [1, 1], [1, 2], ball) ||
+                matchFigure([1, 0], [1, 1], [0, 2], ball) ||
+                matchFigure([1, 0], [2, 1], [2, 2], ball) ||
+                matchFigure([0, 1], [1, 2], [2, 2], ball);
+
+            let matchVTypes =
+                matchFigure([0, 0], [1, 1], [0, 2], ball) ||
+                matchFigure([0, 2], [1, 1], [2, 2], ball) ||
+                matchFigure([2, 0], [1, 1], [2, 2], ball) ||
+                matchFigure([0, 0], [1, 1], [2, 0], ball);
+
+            if (matchRTypes || matchVTypes) {
+                return true;
+            } else {
+                return false;
+            }
+        });
+
+        return foundBall !== undefined;
     }
 }
 
