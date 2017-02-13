@@ -15,10 +15,11 @@ const UNCHANGED_TYPE = 'unchanged';
 const CHANGED_TYPE = 'changed';
 
 const SCORE_PER_BALL = 10;
-const HOW_MANY_BALL_COLOURS = 5;
+const HOW_MANY_BALL_COLOURS = 4;
 
 const MIN_SIZE_OF_FIELD = 5;
 const MAX_SIZE_OF_FIELD = 20;
+const FIELD_SIZE_ONLY_CAN_DO_NEXT_MOVE = 6;
 
 class Core {
 
@@ -45,6 +46,23 @@ class Core {
         });
 
         this.setField(field);
+
+        if (!this.canStartTheGame(n)) {
+            log("Field already has score row / col. Or first move is impossible. Regenerate again.");
+
+            this.generate(n);
+        }
+    }
+
+    canStartTheGame(n) {
+        let hasNotScore = !(this.findScoreRow() || this.findScoreColumn());
+        let canMakeMove = this.canMakeNextMove();
+
+        if (n > FIELD_SIZE_ONLY_CAN_DO_NEXT_MOVE) {
+            return canMakeMove;
+        } else {
+            return hasNotScore && canMakeMove;
+        }
     }
 
     static checkFieldSize(n) {
@@ -464,6 +482,7 @@ class Core {
 
         return foundBall !== undefined;
     }
+
 }
 
 export {

@@ -1,10 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './App';
-import {Core} from './engine/Core.js';
-import {inArray, areFieldsEqual, log} from './engine/helpers';
-import {CHANGED_TYPE, HORIZONTAL_DIRECTION, ILLEGAL_DIRECTION, VERTICAL_DIRECTION} from "./engine/Core";
 import {groupBy} from "lodash";
+
+import App from './App';
+import {Core, CHANGED_TYPE, HORIZONTAL_DIRECTION, ILLEGAL_DIRECTION, VERTICAL_DIRECTION} from "./engine/Core";
+import {inArray, areFieldsEqual, log} from './engine/helpers';
 
 it('renders without crashing', () => {
     const div = document.createElement('div');
