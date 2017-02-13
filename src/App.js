@@ -9,8 +9,6 @@ import MessageBox from "./MessageBox";
 import ScoreBox from "./ScoreBox";
 import Top10Players from "./Top10Players";
 
-// Replace with something else
-// GET, POST
 export const SAVE_USER_SCORE_ENDPOINT = 'http://localhost:8080/score';
 
 class App extends Component {
@@ -39,7 +37,7 @@ class App extends Component {
     }
 
     generateField() {
-        this.core.generate(5);
+        this.core.generate(6);
     }
 
     showMessage(message, messageImportant = false) {
@@ -48,7 +46,13 @@ class App extends Component {
 
     scoreCallback(score) {
         log("New score! " + score);
-        this.setState({score: this.state.score += score, field: this.core.getField()});
+
+        let oldScore = this.state.score;
+
+        this.setState({
+            score: oldScore += score,
+            field: this.core.getField()
+        });
     }
 
     updateFieldCallback() {

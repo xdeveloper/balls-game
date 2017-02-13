@@ -1,4 +1,4 @@
-import {log, logIf, stop} from './helpers';
+import {log, logIf} from './helpers';
 import {every, filter, find, flatten, range, uniq} from 'lodash';
 
 const VERTICAL_DIRECTION = 'vertical-direction';
@@ -15,7 +15,7 @@ const UNCHANGED_TYPE = 'unchanged';
 const CHANGED_TYPE = 'changed';
 
 const SCORE_PER_BALL = 10;
-const HOW_MANY_BALL_COLOURS = 4;
+const HOW_MANY_BALL_COLOURS = 5;
 
 const MIN_SIZE_OF_FIELD = 5;
 const MAX_SIZE_OF_FIELD = 20;
@@ -33,23 +33,27 @@ class Core {
      * @param n size of field
      */
     generate(n) {
-        if (n < MIN_SIZE_OF_FIELD) {
-            throw new Error("Size of field must be 5 x 5 minimum");
-        }
-        if (n > MAX_SIZE_OF_FIELD) {
-            throw new Error("Size of field must be 100 x 100 maximum");
-        }
+        Core.checkFieldSize(n);
 
-        let field = new Array(n);
-        for (let r = 0; r < n; r++) {
-            let row = new Array(r);
-            for (let c = 0; c < n; c++) {
-                row[c] = Core.generateBall();
-            }
-            field[r] = row;
-        }
+        let field = [];
+        range(n).forEach(() => {
+            let row = [];
+            range(n).forEach(() => {
+                row.push(Core.generateBall());
+            });
+            field.push(row);
+        });
 
         this.setField(field);
+    }
+
+    static checkFieldSize(n) {
+        if (n < MIN_SIZE_OF_FIELD) {
+            throw new Error("Size of field must be " + MIN_SIZE_OF_FIELD + "  x " + MIN_SIZE_OF_FIELD + " minimum");
+        }
+        if (n > MAX_SIZE_OF_FIELD) {
+            throw new Error("Size of field must be " + MAX_SIZE_OF_FIELD + " x " + MAX_SIZE_OF_FIELD + " maximum");
+        }
     }
 
     getField() {
@@ -74,8 +78,7 @@ class Core {
      * @param ball array with predefined ball (or random ball if undefined)
      */
     static generateBalls(howManyBalls, ball) {
-        let generator = ball === undefined ? Core.generateBall : () => ball;
-        return range(howManyBalls).map(generator);
+        return range(howManyBalls).map(ball === undefined ? Core.generateBall : () => ball);
     }
 
     static detectMoveDirection(ball1Coords, ball2Coords) {
@@ -113,7 +116,7 @@ class Core {
      * @returns type: {(ILLEGAL_THE_SAME_BALLS_TYPE|ILLEGAL_TYPE|CHANGED_TYPE|UNCHANGED_TYPE)} result of trying
      */
     tryMove(fromBallCoords, toBallCoords) {
-        if (this.field === undefined) {
+        if (this.getField() === undefined) {
             throw new Error("Generate field first");
         }
 
@@ -196,7 +199,7 @@ class Core {
     /**
      *
      * @param balls array of balls
-     * @returns {start: x, end: y} or undefined
+     * @returns {start: {Number}, end: {Number}} or undefined
      */
     static deletedBallsPos(balls) {
         let result;
@@ -235,19 +238,19 @@ class Core {
     }
 
     getBall(coords) {
-        return this.field[coords.row][coords.col];
+        return this.getField()[coords.row][coords.col];
     }
 
     setBall(coords, ball) {
-        this.field[coords.row][coords.col] = ball;
+        this.getField()[coords.row][coords.col] = ball;
     }
 
     getRow(row) {
-        return this.field[row];
+        return this.getField()[row];
     }
 
     getColumn(col) {
-        return this.field.map((row) => row[col]);
+        return this.getField().map((row) => row[col]);
     }
 
     copyRow(row) {
@@ -303,16 +306,16 @@ class Core {
     }
 
     setRow(row, balls) {
-        this.field[row] = balls;
+        this.getField()[row] = balls;
     }
 
     setColumn(col, balls) {
-        if (this.field.length !== balls.length) {
+        if (this.getField().length !== balls.length) {
             return;
         }
 
         let i = 0;
-        this.field.forEach((row) => row[col] = balls[i++]);
+        this.getField().forEach((row) => row[col] = balls[i++]);
     }
 
     scan(scoreCallback = () => {
@@ -361,7 +364,7 @@ class Core {
      * @returns {{line: *, pos: number}} or undefined
      */
     _findScore(getter) {
-        for (let i = this.field.length - 1; i > -1; i--) {
+        for (let i = this.getField().length - 1; i > -1; i--) {
             let line = getter.call(this, i);
             if (Core.containsDeletedBalls(Core.refineBallsLine(line))) {
                 return {line: Core.refineBallsLine(line), pos: i};
