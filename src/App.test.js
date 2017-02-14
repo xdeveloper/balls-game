@@ -37,9 +37,11 @@ test('generates ok', () => {
 });
 
 test('generate balls', () => {
-    expect(Core.generateBalls(0, 0)).toEqual([]);
-    expect(Core.generateBalls(5, 0)).toEqual([0, 0, 0, 0, 0]);
-    expect(Core.generateBalls(5).length).toEqual(5); // randomly filled array
+    let core = new Core(5, 5);
+    expect(core.generateBalls(0, 0)).toEqual([]);
+    expect(core.generateBalls(5, 0)).toEqual([0, 0, 0, 0, 0]);
+    expect(core.generateBalls(5).length).toEqual(5); // randomly filled array
+    expect(core.generateBalls(1)).not.toEqual([1]); // randomly filled array
 });
 
 test('detect move direction', () => {
@@ -291,6 +293,24 @@ test('try to make correct vertical move (2)', () => {
     ])).toBeTruthy();
 });
 
+test('try to make correct vertical move (3)', () => {
+    let core = new Core(5, undefined, [
+        [1, 1, 1, 2, 3],
+        [1, 1, 1, 1, 3],
+        [4, 5, 1, 5, 1],
+        [3, 5, 5, 3, 1],
+        [1, 3, 4, 5, 1],
+    ]);
+    expect(core.tryMove({row: 2, col: 4}, {row: 1, col: 4})).toEqual({type: CHANGED_TYPE});
+    expect(areFieldsEqual(core.getField(), [
+        [1, 1, 1, 2, 3],
+        [1, 1, 1, 1, 1],
+        [4, 5, 1, 5, 3],
+        [3, 5, 5, 3, 1],
+        [1, 3, 4, 5, 1],
+    ])).toBeTruthy();
+});
+
 test('try to make correct horizontal move', () => {
     let core = new Core(5, undefined, [
         [1, 2, 3, 4, 5],
@@ -327,7 +347,6 @@ test('try to make correct horizontal move (2)', () => {
     ])).toBeTruthy();
 });
 
-
 test('scan field', () => {
     let core = new Core(5, undefined, [
         [1, 2, 3, 4, 5],
@@ -363,7 +382,6 @@ test('calc score', () => {
     expect(Core.calcScore([3, 3, 0, 0, 0])).toEqual(30);
 });
 
-
 test('can make next move', () => {
     let core = new Core(5, undefined, [
         [5, 2, 3, 4, 5],
@@ -373,7 +391,6 @@ test('can make next move', () => {
         [1, 3, 4, 5, 5]]);
     expect(core.canMakeNextMove()).toBeTruthy();
 });
-
 
 test('cannot make next move', () => {
     let core = new Core(5, undefined, [
@@ -385,6 +402,15 @@ test('cannot make next move', () => {
     expect(core.canMakeNextMove()).toBeFalsy();
 });
 
+test('(temp!) cannot make next move (2)', () => {
+    let core = new Core(5, undefined, [
+        [1, 1, 2, 4, 7],
+        [1, 4, 5, 1, 3],
+        [4, 6, 3, 7, 1],
+        [3, 5, 7, 4, 2],
+        [4, 7, 5, 3, 7]]);
+    expect(core.canMakeNextMove()).toBeFalsy();
+});
 
 test('can make next move in the smallest group (r - types)', () => {
     expect(Core._canMakeNextMove(([

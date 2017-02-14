@@ -1,5 +1,6 @@
 import {log, logIf} from './helpers';
-import {every, filter, find, flatten, range, uniq} from 'lodash';
+import {filter, find, flatten, range, uniq} from 'lodash';
+import * as Random from "random-js";
 
 const VERTICAL_DIRECTION = 'vertical-direction';
 const HORIZONTAL_DIRECTION = 'horizontal-direction';
@@ -30,6 +31,8 @@ class Core {
         this.n = n;
         this.howManyBallColours = c ? c : HOW_MANY_BALL_COLOURS;
         this.field = field;
+
+        this.randomGenerator = require("random-js")(); // uses the nativeMath engine;
     }
 
     /**
@@ -42,25 +45,25 @@ class Core {
         range(this.n).forEach(() => {
             let row = [];
             range(this.n).forEach(() => {
-                row.push(Core.generateBall(this.howManyBallColours));
+                row.push(this.generateBall(this.howManyBallColours));
             });
             field.push(row);
         });
 
         this.setField(field);
 
-        if (!this.canStartTheGame(this.n)) {
+        if (!this.canStartTheGame()) {
             // "Field already has score row / col. Or first move is impossible. Regenerate again."
 
             this.generate(this.n);
         }
     }
 
-    canStartTheGame(n) {
+    canStartTheGame() {
         let hasNotScore = !(this.findScoreRow() || this.findScoreColumn());
         let canMakeMove = this.canMakeNextMove();
 
-        if (n > FIELD_SIZE_ONLY_CAN_DO_NEXT_MOVE) {
+        if (this.n > FIELD_SIZE_ONLY_CAN_DO_NEXT_MOVE) {
             return canMakeMove;
         } else {
             return hasNotScore && canMakeMove;
@@ -88,8 +91,8 @@ class Core {
      * Generates a random single ball
      * @returns {number} ball
      */
-    static generateBall(ballColours) {
-        return Math.floor(Math.random() * (ballColours - 1 + 1)) + 1;
+    generateBall() {
+        return this.randomGenerator.integer(1, this.howManyBallColours);
     }
 
     /**
@@ -97,8 +100,8 @@ class Core {
      * @param howManyBalls balls count
      * @param ball array with predefined ball (or random ball if undefined)
      */
-    static generateBalls(howManyBalls, ball) {
-        return range(howManyBalls).map(ball === undefined ? Core.generateBall : () => ball);
+    generateBalls(howManyBalls, ball) {
+        return range(howManyBalls).map(ball === undefined ? this.generateBall.bind(this) : () => ball);
     }
 
     static detectMoveDirection(ball1Coords, ball2Coords) {
@@ -136,10 +139,6 @@ class Core {
      * @returns type: {(ILLEGAL_THE_SAME_BALLS_TYPE|ILLEGAL_TYPE|CHANGED_TYPE|UNCHANGED_TYPE)} result of trying
      */
     tryMove(fromBallCoords, toBallCoords) {
-        if (this.getField() === undefined) {
-            throw new Error("Generate field first");
-        }
-
         let result;
 
         if (this.getBall(fromBallCoords) === this.getBall(toBallCoords)) {
@@ -190,7 +189,7 @@ class Core {
     _refillColumn(pos, value) {
         let column = this.getColumn(pos);
         let survivors = column.filter((ball) => ball !== DELETED_BALL);
-        let newBallsLine = Core.generateBalls(column.length - survivors.length, value).concat(survivors);
+        let newBallsLine = this.generateBalls(column.length - survivors.length, value).concat(survivors);
         this.setColumn(pos, newBallsLine);
     }
 
@@ -212,7 +211,7 @@ class Core {
             modifyRow(this.getRow(i), this.getRow(i - 1), start, end);
         }
 
-        let newlyGeneratedBalls = Core.generateBalls(end - start + 1, value);
+        let newlyGeneratedBalls = this.generateBalls(end - start + 1, value);
         modifyLastRow(this.getRow(0), newlyGeneratedBalls, start, end);
     }
 
@@ -338,10 +337,14 @@ class Core {
         this.getField().forEach((row) => row[col] = balls[i++]);
     }
 
+    /**
+     * Scans the whole field for score, callbacks in case of new score, refills field with new balls
+     * @param scoreCallback
+     * @param updatedFieldCallback
+     */
     scan(scoreCallback = () => {
     }, updatedFieldCallback = () => {
     }) {
-
         let process = function (line, setter, refillType) {
             let score = Core.calcScore(line.line);
             if (scoreCallback(score, line.pos, ROW_TYPE, line.line)) {
@@ -366,6 +369,7 @@ class Core {
                     let colFound = this.findScoreColumn();
                     if (colFound !== undefined) {
                         if (process(colFound, this.setColumn, COLUMN_TYPE)) return;
+                        scanRows = true;
                     } else {
                         break;
                     }

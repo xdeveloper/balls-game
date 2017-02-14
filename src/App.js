@@ -48,9 +48,10 @@ class App extends Component {
         log("New score! " + score);
 
         let oldScore = this.state.score;
+        let newScore = oldScore + score;
 
         this.setState({
-            score: oldScore += score,
+            score: newScore,
             field: this.core.getField()
         });
     }
@@ -153,6 +154,7 @@ class App extends Component {
         </div>;
 
         let gameOverArea = <div>
+            <h1>Game Over!</h1>
             Top 10 players:
             <Top10Players troubleHandler={(mess) => this.showMessage(mess, true)}/>
             <hr />
