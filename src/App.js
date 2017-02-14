@@ -37,7 +37,11 @@ class App extends Component {
     }
 
     generateField() {
+        log(" --- Generate -- field ---");
+
         this.core.generate();
+
+        this.field = this.core.getField();
     }
 
     showMessage(message, messageImportant = false) {
@@ -124,7 +128,10 @@ class App extends Component {
 
     startAgain() {
         this.showMessage('Game restarted without saving');
-        this.resetGame();
+
+        this.deferredCall(() => {
+            this.resetGame();
+        }, 1000);
     }
 
     gameOver() {

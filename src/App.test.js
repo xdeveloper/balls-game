@@ -41,7 +41,6 @@ test('generate balls', () => {
     expect(core.generateBalls(0, 0)).toEqual([]);
     expect(core.generateBalls(5, 0)).toEqual([0, 0, 0, 0, 0]);
     expect(core.generateBalls(5).length).toEqual(5); // randomly filled array
-    expect(core.generateBalls(1)).not.toEqual([1]); // randomly filled array
 });
 
 test('detect move direction', () => {
@@ -409,6 +408,16 @@ test('(temp!) cannot make next move (2)', () => {
         [4, 6, 3, 7, 1],
         [3, 5, 7, 4, 2],
         [4, 7, 5, 3, 7]]);
+    expect(core.canMakeNextMove()).toBeFalsy();
+});
+
+test('(temp!) cannot make next move (3)', () => {
+    let core = new Core(5, undefined, [
+        [2, 5, 3, 2, 1],
+        [6, 1, 5, 4, 7],
+        [3, 4, 2, 6, 6],
+        [3, 6, 3, 3, 5],
+        [4, 1, 4, 3, 4]]);
     expect(core.canMakeNextMove()).toBeFalsy();
 });
 
