@@ -24,6 +24,8 @@ class Top10Players extends Component {
         let xhr = new XMLHttpRequest();
         xhr.open("GET", SERVER_ENDPOINT, true);
         xhr.onload = function (e) {
+            log(e.status);
+
             if (e.status === 200) {
                 try {
                     let data = JSON.parse(xhr.responseText);
@@ -38,7 +40,7 @@ class Top10Players extends Component {
             } else {
                 this.props.troubleHandler("Error loading top 10 players");
             }
-        }.bind(this);
+        }.bind(this, xhr);
         xhr.onerror = function (e) {
             this.props.troubleHandler("Error loading top 10 players");
         }.bind(this);

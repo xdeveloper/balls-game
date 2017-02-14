@@ -116,11 +116,18 @@ class App extends Component {
     }
 
     saveAndStartAgain() {
+        this.core.generate();
+        this.field = this.core.getField();
+
         this.setState(GAME_STATE_START_NEW_GAME);
         this.saveScore();
+
     }
 
     startAgain() {
+        this.core.generate();
+        this.field = this.core.getField();
+
         this.showMessage('Game restarted without saving');
 
         this.deferredCall(() => {
