@@ -1,6 +1,7 @@
-import {log, logIf} from './helpers';
 import {filter, find, flatten, range, uniq} from 'lodash';
-import * as Random from "random-js";
+import Random from "random-js";
+
+import {log, logIf} from './helpers';
 
 const VERTICAL_DIRECTION = 'vertical-direction';
 const HORIZONTAL_DIRECTION = 'horizontal-direction';
@@ -24,21 +25,22 @@ const FIELD_SIZE_ONLY_CAN_DO_NEXT_MOVE = 6;
 
 class Core {
 
-    // For unit testing
+    /**
+     * @param n size of play field
+     * @param c max colours
+     * @param field {Array} 2d array - for testing
+     */
     constructor(n, c, field) {
         Core.checkFieldSize(n);
 
         this.n = n;
         this.howManyBallColours = c ? c : HOW_MANY_BALL_COLOURS;
         this.field = field;
-
-        this.randomGenerator = require("random-js")(); // uses the nativeMath engine;
+        this.randomGenerator = new Random();
     }
 
     /**
-     * Generates the field of n x n size
-     * (only square type, rectangle is impossible)
-     * @param n size of field
+     * Generates the field
      */
     generate() {
         let field = [];
