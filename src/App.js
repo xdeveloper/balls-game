@@ -11,40 +11,30 @@ import Top10Players from "./Top10Players";
 
 let location = window.location;
 export const SERVER_ENDPOINT = location.protocol + '//' + location.hostname + ':' + location.port + '/score';
+log("Server's endpoint: " + SERVER_ENDPOINT);
+
+const GAME_STATE_ENTERING = {
+    playerName: 'Player1',
+    gameStage: 'ENTERING'
+};
+
+const GAME_STATE_START_NEW_GAME = {
+    gameStage: 'RUNNING',
+    message: 'Click 2 balls to swap',
+    messageImportant: false,
+    score: 0
+};
 
 class App extends Component {
     constructor() {
         super();
 
-        log("Server's endpoint: " + SERVER_ENDPOINT);
-
         this.core = new Core(5, 7);
-        this.initialize();
-        this.handleUserNameChange = this.handleUserNameChange.bind(this);
-    }
-
-    initialize() {
-        this.generateField();
-        this.field = this.core.getField();
-
-        this.initialState = {
-            playerName: 'Player1',
-            gameOver: false,
-            message: 'Click 2 balls to swap',
-            messageImportant: false,
-            field: this.field,
-            score: 0
-        };
-
-        this.state = this.initialState;
-    }
-
-    generateField() {
-        log(" --- Generate -- field ---");
-
         this.core.generate();
-
         this.field = this.core.getField();
+        this.state = GAME_STATE_ENTERING;
+
+        this.handleUserNameChange = this.handleUserNameChange.bind(this);
     }
 
     showMessage(message, messageImportant = false) {
@@ -98,21 +88,13 @@ class App extends Component {
                         this.showMessage("Make your move", true);
                     } else {
                         this.showMessage("Game over!", true);
-                        this.setState({gameOver: true});
+                        this.setState({gameStage: 'OVER'});
                     }
                 }, 500);
             }
 
             this.from = undefined;
         }
-    }
-
-    saveAndStartAgain() {
-        log(this.state.score);
-        log(this.state.playerName);
-
-        this.saveScore();
-        this.resetGame();
     }
 
     saveScore() {
@@ -133,29 +115,41 @@ class App extends Component {
         xhr.send(body);
     }
 
+    saveAndStartAgain() {
+        this.setState(GAME_STATE_START_NEW_GAME);
+        this.saveScore();
+    }
+
     startAgain() {
         this.showMessage('Game restarted without saving');
 
         this.deferredCall(() => {
-            this.resetGame();
-        }, 1000);
+            this.setState(GAME_STATE_START_NEW_GAME);
+        }, 800);
+    }
+
+    quitTheGame() {
+        this.setState(GAME_STATE_ENTERING);
     }
 
     gameOver() {
-        this.setState({gameOver: true});
-    }
-
-    resetGame() {
-        this.generateField();
-        this.setState(this.initialState);
+        this.setState({
+            gameStage: 'OVER'
+        });
     }
 
     handleUserNameChange(event) {
         this.setState({playerName: event.target.value});
     }
 
+    startGame() {
+        this.setState(GAME_STATE_START_NEW_GAME);
+    }
+
     render() {
         let gameArea = <div>
+            <ScoreBox score={this.state.score}/>
+            <MessageBox message={this.state.message} important={this.state.messageImportant}/>
             <br />
             <center>
                 <Grid
@@ -168,25 +162,39 @@ class App extends Component {
         </div>;
 
         let gameOverArea = <div>
+            <ScoreBox score={this.state.score}/>
+            <MessageBox message={this.state.message} important={this.state.messageImportant}/>
             <h1>Game Over!</h1>
             Top 10 players:
             <Top10Players troubleHandler={(mess) => this.showMessage(mess, true)}/>
             <hr />
-            Your name, please <input type="text" value={this.state.playerName} onChange={this.handleUserNameChange}/>
+            Your name <span>{this.state.playerName}</span>
             <br />
             <br />
             <button onClick={() => this.saveAndStartAgain()}>Save and start again</button>
             <button onClick={() => this.startAgain()}>Just start again</button>
+            <button onClick={() => this.quitTheGame()}>Quit the Game</button>
+        </div>;
+
+        let gameEnteringArea = <div>
+            Enter your name <input type="text" value={this.state.playerName}
+                                   onKeyPress={(ev) => {
+                                       if (ev.nativeEvent.key === 'Enter') {
+                                           this.startGame();
+                                       }
+                                   }}
+                                   onChange={this.handleUserNameChange}/>
+            <br />
+            <br />
+            <button onClick={() => this.startGame()}>Start Game</button>
         </div>;
 
         return (
             <div className="App" style={{width: '100%'}}>
                 <img src={logo_game} className="App-logo-static" alt="logo"/>
                 <h1>Balls</h1>
-                <ScoreBox score={this.state.score}/>
-                <MessageBox message={this.state.message} important={this.state.messageImportant}/>
                 <br />
-                {this.state.gameOver ? gameOverArea : gameArea}
+                {this.state.gameStage === 'ENTERING' ? gameEnteringArea : this.state.gameStage === 'RUNNING' ? gameArea : gameOverArea}
             </div>
         );
     }
