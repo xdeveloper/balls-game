@@ -10,7 +10,7 @@ import ScoreBox from "./ScoreBox";
 import Top10Players from "./Top10Players";
 
 let location = window.location;
-export const SERVER_ENDPOINT = location.protocol + '//' + location.hostname + ':' + location.port + '/score';
+const SERVER_ENDPOINT = location.protocol + '//' + location.hostname + ':' + location.port + '/score';
 log("Server's endpoint: " + SERVER_ENDPOINT);
 
 const GAME_STATE_ENTERING = {

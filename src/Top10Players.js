@@ -1,7 +1,10 @@
 import React, {Component} from 'react';
 import './css/Helpers.css';
-import {SERVER_ENDPOINT} from "./App";
 import {log} from './engine/helpers';
+
+let location = window.location;
+const SERVER_ENDPOINT = location.protocol + '//' + location.hostname + ':' + location.port + '/score';
+log("Server's endpoint: " + SERVER_ENDPOINT);
 
 class Top10Players extends Component {
 
