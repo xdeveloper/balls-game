@@ -24,7 +24,11 @@ const FIELD_SIZE_ONLY_CAN_DO_NEXT_MOVE = 6;
 class Core {
 
     // For unit testing
-    constructor(field) {
+    constructor(n, c, field) {
+        Core.checkFieldSize(n);
+
+        this.n = n;
+        this.howManyBallColours = c ? c : HOW_MANY_BALL_COLOURS;
         this.field = field;
     }
 
@@ -33,24 +37,22 @@ class Core {
      * (only square type, rectangle is impossible)
      * @param n size of field
      */
-    generate(n) {
-        Core.checkFieldSize(n);
-
+    generate() {
         let field = [];
-        range(n).forEach(() => {
+        range(this.n).forEach(() => {
             let row = [];
-            range(n).forEach(() => {
-                row.push(Core.generateBall());
+            range(this.n).forEach(() => {
+                row.push(Core.generateBall(this.howManyBallColours));
             });
             field.push(row);
         });
 
         this.setField(field);
 
-        if (!this.canStartTheGame(n)) {
-            log("Field already has score row / col. Or first move is impossible. Regenerate again.");
+        if (!this.canStartTheGame(this.n)) {
+            // "Field already has score row / col. Or first move is impossible. Regenerate again."
 
-            this.generate(n);
+            this.generate(this.n);
         }
     }
 
@@ -67,7 +69,7 @@ class Core {
 
     static checkFieldSize(n) {
         if (n < MIN_SIZE_OF_FIELD) {
-            throw new Error("Size of field must be " + MIN_SIZE_OF_FIELD + "  x " + MIN_SIZE_OF_FIELD + " minimum");
+            throw new Error("Size of field must be " + MIN_SIZE_OF_FIELD + " x " + MIN_SIZE_OF_FIELD + " minimum");
         }
         if (n > MAX_SIZE_OF_FIELD) {
             throw new Error("Size of field must be " + MAX_SIZE_OF_FIELD + " x " + MAX_SIZE_OF_FIELD + " maximum");
@@ -86,8 +88,8 @@ class Core {
      * Generates a random single ball
      * @returns {number} ball
      */
-    static generateBall() {
-        return Math.floor(Math.random() * (HOW_MANY_BALL_COLOURS - 1 + 1)) + 1;
+    static generateBall(ballColours) {
+        return Math.floor(Math.random() * (ballColours - 1 + 1)) + 1;
     }
 
     /**
@@ -147,11 +149,11 @@ class Core {
         } else {
             this.swapBallsOnField(fromBallCoords, toBallCoords);
             // Vertical
-            if (Core.containsDeletedBalls(Core.refineBallsLine(this.copyRow(toBallCoords.row)))) {
+            if (this.rowHasScore(toBallCoords.row) || this.rowHasScore(fromBallCoords.row)) {
                 result = {type: CHANGED_TYPE};
             } else {
                 // Horizontal
-                if (Core.containsDeletedBalls(Core.refineBallsLine(this.copyColumn(toBallCoords.col)))) {
+                if (this.columnHasScore(toBallCoords.col) || this.columnHasScore(fromBallCoords.col)) {
                     result = {type: CHANGED_TYPE};
                 } else {
                     // Nothing found
@@ -400,7 +402,7 @@ class Core {
     }
 
     getHowManyBallColours() {
-        return HOW_MANY_BALL_COLOURS;
+        return this.howManyBallColours;
     }
 
     _copy3x3Field(pos) {
@@ -417,14 +419,16 @@ class Core {
 
     canMakeNextMove() {
         let rng = range(this.getField().length - 2);
-        return !every(rng, (r) => {
-            return every(rng, (c) => {
-                let can = Core._canMakeNextMove(this._copy3x3Field({row: r, col: c}));
-                if (can) {
-                    return false;
+
+        for (let r = 0; r < rng.length; r++) {
+            for (let c = 0; c < rng.length; c++) {
+                if (Core._canMakeNextMove(this._copy3x3Field({row: r, col: c}))) {
+                    log('Into the square 3x3 with top left corner - row = ' + r + ', col = ' + c);
+                    return true;
                 }
-            });
-        });
+            }
+        }
+        return false;
     }
 
     static _cannotMakeNextMove(_3x3Field, ballToIgnore = undefined) {
@@ -483,10 +487,23 @@ class Core {
         return foundBall !== undefined;
     }
 
+    rowHasScore(row) {
+        return this._hasScore(row, this.copyRow.bind(this));
+    }
+
+    columnHasScore(col) {
+        return this._hasScore(col, this.copyColumn.bind(this));
+    }
+
+    _hasScore(pos, getter) {
+        return Core.containsDeletedBalls(Core.refineBallsLine(getter(pos)));
+    }
 }
 
 export {
     Core,
+    MIN_SIZE_OF_FIELD,
+    MAX_SIZE_OF_FIELD,
     UNCHANGED_TYPE,
     CHANGED_TYPE,
     ILLEGAL_TYPE,

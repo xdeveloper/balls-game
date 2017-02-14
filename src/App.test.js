@@ -3,7 +3,10 @@ import ReactDOM from 'react-dom';
 import {groupBy} from "lodash";
 
 import App from './App';
-import {Core, CHANGED_TYPE, HORIZONTAL_DIRECTION, ILLEGAL_DIRECTION, VERTICAL_DIRECTION} from "./engine/Core";
+import {
+    Core, CHANGED_TYPE, HORIZONTAL_DIRECTION, ILLEGAL_DIRECTION, VERTICAL_DIRECTION,
+    MIN_SIZE_OF_FIELD, MAX_SIZE_OF_FIELD
+} from "./engine/Core";
 import {inArray, areFieldsEqual, log} from './engine/helpers';
 
 it('renders without crashing', () => {
@@ -11,9 +14,18 @@ it('renders without crashing', () => {
     ReactDOM.render(<App />, div);
 });
 
+test('init fail', () => {
+    expect(function () {
+        new Core(2);
+    }).toThrow(new Error("Size of field must be " + MIN_SIZE_OF_FIELD + " x " + MIN_SIZE_OF_FIELD + " minimum"));
+    expect(function () {
+        new Core(101);
+    }).toThrow(new Error("Size of field must be " + MAX_SIZE_OF_FIELD + " x " + MAX_SIZE_OF_FIELD + " maximum"));
+});
+
 test('generates ok', () => {
-    let core = new Core();
-    core.generate(5);
+    let core = new Core(5, 4);
+    core.generate();
     let field = core.getField();
 
     // Contain only 1, 2, 3, 4 balls (so - 5 is illegal ball)
@@ -22,17 +34,6 @@ test('generates ok', () => {
     expect(inArray(5, field[2])).toBeFalsy();
     expect(inArray(5, field[3])).toBeFalsy();
     expect(inArray(5, field[4])).toBeFalsy();
-});
-
-test('generates fail', () => {
-    expect(function () {
-        new Core().generate(2);
-    }).toThrow(new Error("Size of field must be 5 x 5 minimum"));
-
-    expect(function () {
-        new Core().generate(101);
-    }).toThrow(new Error("Size of field must be 100 x 100 maximum"));
-
 });
 
 test('generate balls', () => {
@@ -61,7 +62,7 @@ test('refine balls line', () => {
 });
 
 test('copy column', () => {
-    let core = new Core([
+    let core = new Core(5, undefined, [
         [3, 3, 3, 3, 3],
         [3, 3, 3, 3, 3],
         [3, 3, 1, 3, 3],
@@ -74,7 +75,7 @@ test('copy column', () => {
 });
 
 test('copy row', () => {
-    let core = new Core([
+    let core = new Core(5, undefined, [
         [3, 3, 3, 3, 3],
         [3, 3, 3, 3, 3],
         [3, 3, 1, 3, 3],
@@ -87,7 +88,7 @@ test('copy row', () => {
 });
 
 test('set column (wrong column)', () => {
-    let core = new Core([
+    let core = new Core(5, undefined, [
         [3, 3, 3, 3, 3],
         [3, 3, 3, 3, 3],
         [3, 3, 1, 3, 3],
@@ -114,7 +115,7 @@ test('set column (wrong column)', () => {
 });
 
 test('set column (correct column)', () => {
-    let core = new Core([
+    let core = new Core(5, undefined, [
         [3, 3, 3, 3, 3],
         [3, 3, 3, 3, 3],
         [3, 3, 1, 3, 3],
@@ -161,7 +162,7 @@ test('deleted balls position', () => {
 });
 
 test('refill row (predefined value)', () => {
-    let core = new Core([
+    let core = new Core(5, undefined, [
         [4, 4, 4, 4, 4],
         [3, 3, 3, 3, 3],
         [3, 3, 2, 3, 3],
@@ -179,7 +180,7 @@ test('refill row (predefined value)', () => {
 });
 
 test('refill row (2)', () => {
-    let core = new Core([
+    let core = new Core(5, undefined, [
         [1, 2, 3, 4, 5],
         [5, 1, 2, 3, 4],
         [4, 5, 1, 2, 3],
@@ -197,7 +198,7 @@ test('refill row (2)', () => {
 });
 
 test('refill row (3)', () => {
-    let core = new Core([
+    let core = new Core(5, undefined, [
         [1, 2, 3, 4, 5],
         [5, 1, 2, 3, 4],
         [0, 0, 0, 0, 3],
@@ -215,7 +216,7 @@ test('refill row (3)', () => {
 });
 
 test('refill row (4)', () => {
-    let core = new Core([
+    let core = new Core(5, undefined, [
         [1, 2, 0, 0, 0],
         [5, 1, 2, 3, 4],
         [3, 1, 3, 1, 3],
@@ -233,7 +234,7 @@ test('refill row (4)', () => {
 });
 
 test('refill column (predefined value)', () => {
-    let core = new Core([
+    let core = new Core(6, undefined, [
         [5, 5, 5, 5, 5, 5],
         [4, 4, 4, 4, 4, 5],
         [3, 3, 0, 3, 3, 5],
@@ -254,18 +255,15 @@ test('refill column (predefined value)', () => {
     ])).toBeTruthy();
 });
 
-test('try to make correct move', () => {
-    let core = new Core([
+test('try to make correct vertical move', () => {
+    let core = new Core(5, undefined, [
         [1, 2, 3, 4, 5],
         [5, 1, 2, 3, 4],
         [4, 5, 1, 5, 3],
         [3, 5, 5, 3, 2],
         [1, 3, 4, 5, 1],
     ]);
-
-    let res = core.tryMove({row: 2, col: 3}, {row: 3, col: 3});
-
-    expect(res).toEqual({type: CHANGED_TYPE});
+    expect(core.tryMove({row: 2, col: 3}, {row: 3, col: 3})).toEqual({type: CHANGED_TYPE});
     expect(areFieldsEqual(core.getField(), [
         [1, 2, 3, 4, 5],
         [5, 1, 2, 3, 4],
@@ -275,8 +273,63 @@ test('try to make correct move', () => {
     ])).toBeTruthy();
 });
 
+test('try to make correct vertical move (2)', () => {
+    let core = new Core(5, undefined, [
+        [1, 2, 3, 4, 5],
+        [5, 1, 2, 3, 4],
+        [4, 5, 1, 5, 3],
+        [3, 5, 5, 3, 2],
+        [1, 3, 4, 5, 1],
+    ]);
+    expect(core.tryMove({row: 3, col: 3}, {row: 2, col: 3})).toEqual({type: CHANGED_TYPE});
+    expect(areFieldsEqual(core.getField(), [
+        [1, 2, 3, 4, 5],
+        [5, 1, 2, 3, 4],
+        [4, 5, 1, 3, 3],
+        [3, 5, 5, 5, 2],
+        [1, 3, 4, 5, 1],
+    ])).toBeTruthy();
+});
+
+test('try to make correct horizontal move', () => {
+    let core = new Core(5, undefined, [
+        [1, 2, 3, 4, 5],
+        [5, 1, 2, 3, 4],
+        [4, 5, 1, 5, 3],
+        [3, 5, 5, 3, 2],
+        [1, 3, 4, 5, 1],
+    ]);
+    expect(core.tryMove({row: 2, col: 4}, {row: 2, col: 3})).toEqual({type: CHANGED_TYPE});
+    expect(areFieldsEqual(core.getField(), [
+        [1, 2, 3, 4, 5],
+        [5, 1, 2, 3, 4],
+        [4, 5, 1, 3, 5],
+        [3, 5, 5, 3, 2],
+        [1, 3, 4, 5, 1],
+    ])).toBeTruthy();
+});
+
+test('try to make correct horizontal move (2)', () => {
+    let core = new Core(5, undefined, [
+        [1, 2, 3, 4, 5],
+        [5, 1, 2, 3, 4],
+        [4, 5, 1, 5, 3],
+        [3, 5, 5, 3, 2],
+        [1, 3, 4, 5, 1],
+    ]);
+    expect(core.tryMove({row: 2, col: 3}, {row: 2, col: 4})).toEqual({type: CHANGED_TYPE});
+    expect(areFieldsEqual(core.getField(), [
+        [1, 2, 3, 4, 5],
+        [5, 1, 2, 3, 4],
+        [4, 5, 1, 3, 5],
+        [3, 5, 5, 3, 2],
+        [1, 3, 4, 5, 1],
+    ])).toBeTruthy();
+});
+
+
 test('scan field', () => {
-    let core = new Core([
+    let core = new Core(5, undefined, [
         [1, 2, 3, 4, 5],
         [5, 1, 2, 3, 4],
         [4, 5, 1, 2, 3],
@@ -291,7 +344,7 @@ test('scan field', () => {
 });
 
 test('find score row / column', () => {
-    let core = new Core([
+    let core = new Core(5, undefined, [
         [1, 2, 3, 4, 4],
         [5, 1, 2, 3, 4],
         [4, 5, 1, 4, 4],
@@ -310,20 +363,28 @@ test('calc score', () => {
     expect(Core.calcScore([3, 3, 0, 0, 0])).toEqual(30);
 });
 
+
 test('can make next move', () => {
-    let core = new Core([
+    let core = new Core(5, undefined, [
         [5, 2, 3, 4, 5],
         [5, 1, 2, 3, 4],
         [4, 5, 1, 2, 5],
         [3, 1, 5, 5, 2],
         [1, 3, 4, 5, 5]]);
-
-    let canMakeNextMove = core.canMakeNextMove();
-
-    log(canMakeNextMove);
-
-    expect(canMakeNextMove).toBeTruthy();
+    expect(core.canMakeNextMove()).toBeTruthy();
 });
+
+
+test('cannot make next move', () => {
+    let core = new Core(5, undefined, [
+        [1, 7, 6, 2, 4],
+        [1, 3, 3, 5, 6],
+        [2, 2, 1, 4, 6],
+        [1, 6, 1, 1, 3],
+        [2, 6, 7, 6, 3]]);
+    expect(core.canMakeNextMove()).toBeFalsy();
+});
+
 
 test('can make next move in the smallest group (r - types)', () => {
     expect(Core._canMakeNextMove(([
@@ -432,7 +493,7 @@ test('can make next move in the smallest group (v - types)', () => {
 });
 
 test('copy3x3Field', () => {
-    let core = new Core([
+    let core = new Core(5, undefined, [
         [1, 8, 8, 4, 5],
         [5, 2, 3, 3, 4],
         [4, 1, 2, 2, 5],

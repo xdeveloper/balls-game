@@ -15,7 +15,7 @@ class App extends Component {
     constructor() {
         super();
 
-        this.core = new Core();
+        this.core = new Core(5, 7);
         this.initialize();
         this.handleUserNameChange = this.handleUserNameChange.bind(this);
     }
@@ -37,7 +37,7 @@ class App extends Component {
     }
 
     generateField() {
-        this.core.generate(6);
+        this.core.generate();
     }
 
     showMessage(message, messageImportant = false) {
