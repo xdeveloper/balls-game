@@ -9,11 +9,14 @@ import MessageBox from "./MessageBox";
 import ScoreBox from "./ScoreBox";
 import Top10Players from "./Top10Players";
 
-export const SAVE_USER_SCORE_ENDPOINT = 'http://localhost:8080/score';
+let location = window.location;
+export const SERVER_ENDPOINT = location.protocol + '//' + location.hostname + ':' + location.port + '/score';
 
 class App extends Component {
     constructor() {
         super();
+
+        log("Server's endpoint: " + SERVER_ENDPOINT);
 
         this.core = new Core(5, 7);
         this.initialize();
@@ -115,11 +118,15 @@ class App extends Component {
     saveScore() {
         let xhr = new XMLHttpRequest();
         let body = 'playerName=' + this.state.playerName + '&score=' + this.state.score;
-        xhr.open("POST", SAVE_USER_SCORE_ENDPOINT, true);
+        xhr.open("POST", SERVER_ENDPOINT, true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function (e) {
-            this.showMessage('Saved');
-        }.bind(this);
+            if (e.status === 200) {
+                this.showMessage('Saved');
+            } else {
+                this.showMessage('Saving failed', true);
+            }
+        }.bind(this, xhr);
         xhr.onerror = function (e) {
             this.showMessage('Error saving to server', true);
         }.bind(this);

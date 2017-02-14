@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import './css/Helpers.css';
-import {SAVE_USER_SCORE_ENDPOINT} from "./App";
+import {SERVER_ENDPOINT} from "./App";
+import {log} from './engine/helpers';
 
 class Top10Players extends Component {
 
@@ -18,13 +19,22 @@ class Top10Players extends Component {
 
     loadData() {
         let xhr = new XMLHttpRequest();
-        xhr.open("GET", SAVE_USER_SCORE_ENDPOINT, true);
+        xhr.open("GET", SERVER_ENDPOINT, true);
         xhr.onload = function (e) {
-            let data = JSON.parse(xhr.responseText);
-            console.log(data);
-            this.setState({
-                players: data
-            });
+            if (e.status === 200) {
+                try {
+                    let data = JSON.parse(xhr.responseText);
+                    log("JSON received");
+                    this.setState({
+                        players: data
+                    });
+                } catch (e) {
+                    log("Wrong data format!");
+                    this.props.troubleHandler("Error loading top 10 players");
+                }
+            } else {
+                this.props.troubleHandler("Error loading top 10 players");
+            }
         }.bind(this);
         xhr.onerror = function (e) {
             this.props.troubleHandler("Error loading top 10 players");
