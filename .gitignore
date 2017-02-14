@@ -4,8 +4,6 @@
 node_modules
 
 # testing
-coverage
-
 # production
 build
 
@@ -14,8 +12,4 @@ build
 .env
 npm-debug.log
 balls-game.iml
-.idea/misc.xml
-.idea/modules.xml
-.idea/vcs.xml
-.idea/workspace.xml
-.idea/dictionaries/kit.xml
+.idea/
